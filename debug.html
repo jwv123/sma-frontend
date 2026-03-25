@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Workflow Trigger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #001f3f, #808080);
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        .test-result {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            background: #002d50;
+        }
+
+        .success { background-color: #4CAF50; }
+        .error { background-color: #f44336; }
+        .info { background-color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Workflow Trigger Debug Tool</h1>
+
+        <div>
+            <h2>Tests</h2>
+            <button onclick="testNetwork()">Test Network Connectivity</button>
+            <button onclick="testSupabase()">Test Supabase Connection</button>
+            <button onclick="testWorkflowFunction()">Test Workflow Function Exposure</button>
+            <button onclick="testWorkflowUrl()">Test Workflow URL</button>
+        </div>
+
+        <div>
+            <h2>Manual Workflow Trigger</h2>
+            <input type="text" id="workflowId" placeholder="Enter workflow ID" style="padding: 0.5rem; margin: 0.5rem; border-radius: 5px; border: none;">
+            <button onclick="triggerWorkflowManual()">Trigger Workflow</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script>
+        // Function to add results to the page
+        function addResult(title, content, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong><br><pre>${JSON.stringify(content, null, 2)}</pre>`;
+            resultsDiv.appendChild(resultDiv);
+
+            // Scroll to the result
+            resultDiv.scrollIntoView({behavior: 'smooth'});
+        }
+
+        // Test network connectivity
+        async function testNetwork() {
+            addResult('Network Test', 'Starting network connectivity test...', 'info');
+            try {
+                const result = await window.testNetworkConnectivity();
+                addResult('Network Test Result', result, result.success ? 'success' : 'error');
+            } catch (error) {
+                addResult('Network Test Error', error, 'error');
+            }
+        }
+
+        // Test Supabase connection
+        async function testSupabase() {
+            addResult('Supabase Test', 'Starting Supabase connection test...', 'info');
+            try {
+                const result = await window.testSupabaseConnection();
+                addResult('Supabase Test Result', result, result.success ? 'success' : 'error');
+            } catch (error) {
+                addResult('Supabase Test Error', error, 'error');
+            }
+        }
+
+        // Test if workflow function is exposed
+        function testWorkflowFunction() {
+            const isExposed = typeof window.triggerWorkflow === 'function';
+            addResult('Workflow Function Test', {
+                exposed: isExposed,
+                type: typeof window.triggerWorkflow
+            }, isExposed ? 'success' : 'error');
+        }
+
+        // Test workflow URL
+        async function testWorkflowUrl() {
+            addResult('Workflow URL Test', 'Testing workflow URL accessibility...', 'info');
+            try {
+                const result = await window.testWorkflowUrl();
+                addResult('Workflow URL Test Result', result, result.success ? 'success' : 'error');
+            } catch (error) {
+                addResult('Workflow URL Test Error', error, 'error');
+            }
+        }
+
+        // Manual workflow trigger
+        async function triggerWorkflowManual() {
+            const workflowId = document.getElementById('workflowId').value;
+            if (!workflowId) {
+                addResult('Error', 'Please enter a workflow ID', 'error');
+                return;
+            }
+
+            addResult('Workflow Trigger', `Triggering workflow with ID: ${workflowId}`, 'info');
+            try {
+                const result = await window.triggerWorkflow(workflowId);
+                addResult('Workflow Trigger Result', result, result.success ? 'success' : 'error');
+            } catch (error) {
+                addResult('Workflow Trigger Error', error, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

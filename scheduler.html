@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduler - Social Media Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #001f3f, #808080);
+            min-height: 100vh;
+            color: white;
+        }
+
+        body input, body textarea, body select {
+            color: black;
+        }
+
+        .scheduler-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        input[type="checkbox"] + label {
+            display: inline-block;
+            margin-right: 1rem;
+            margin-bottom: 0;
+        }
+
+        button {
+            padding: 0.7rem 1.5rem;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 10px;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background: #002d50;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .schedule-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            margin-top: 1rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .cron-help {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="scheduler-container">
+        <div class="header">
+            <h1>Social Media Automation</h1>
+            <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h2>Schedule Automation</h2>
+            <div id="message"></div>
+
+            <form id="schedule-form">
+                <input type="hidden" id="schedule-id">
+                <div class="form-group">
+                    <label for="workflow-selector">Select Workflow:</label>
+                    <select id="workflow-selector" required>
+                        <option value="">Loading workflows...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="content-selector">Select Content (Optional):</label>
+                    <select id="content-selector">
+                        <option value="">Loading content items...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-name">Schedule Name:</label>
+                    <input type="text" id="schedule-name" placeholder="e.g., Daily Morning Post" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-type">Schedule Type:</label>
+                    <select id="schedule-type">
+                        <option value="one-time">One-time</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="custom">Custom (Advanced)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="one-time-schedule" style="display: none;">
+                    <label for="schedule-datetime">Date & Time:</label>
+                    <input type="datetime-local" id="schedule-datetime" min="">
+                    <small>Select a future date and time for this one-time execution</small>
+                </div>
+
+                <div class="form-group" id="recurring-options" style="display: none;">
+                    <label for="schedule-time">Time of Day:</label>
+                    <input type="time" id="schedule-time">
+                    <small>Select the time when this schedule should run</small>
+
+                    <div id="weekly-options" style="display: none; margin-top: 1rem;">
+                        <label>Days of Week:</label>
+                        <div>
+                            <input type="checkbox" id="day-sun" value="0"><label for="day-sun">Sunday</label>
+                            <input type="checkbox" id="day-mon" value="1"><label for="day-mon">Monday</label>
+                            <input type="checkbox" id="day-tue" value="2"><label for="day-tue">Tuesday</label>
+                            <input type="checkbox" id="day-wed" value="3"><label for="day-wed">Wednesday</label>
+                            <input type="checkbox" id="day-thu" value="4"><label for="day-thu">Thursday</label>
+                            <input type="checkbox" id="day-fri" value="5"><label for="day-fri">Friday</label>
+                            <input type="checkbox" id="day-sat" value="6"><label for="day-sat">Saturday</label>
+                        </div>
+                        <small>Select one or more days for weekly execution</small>
+                    </div>
+
+                    <div id="monthly-options" style="display: none; margin-top: 1rem;">
+                        <label for="month-day">Day of Month:</label>
+                        <input type="number" id="month-day" min="1" max="31" value="1">
+                        <small>Enter day of month (1-31) for monthly execution</small>
+                    </div>
+                </div>
+
+                <div class="form-group" id="custom-cron" style="display: none;">
+                    <label for="cron-expression">Custom Cron Expression:</label>
+                    <input type="text" id="cron-expression" placeholder="e.g., 0 9 * * *">
+                    <div class="cron-help">
+                        <strong>Cron Format:</strong> minute hour day month day-of-week<br>
+                        Examples:<br>
+                        • 0 9 * * * = Daily at 9:00 AM<br>
+                        • 0 15 * * 1 = Weekly on Monday at 3:00 PM<br>
+                        • 0 0 1 * * = Monthly on the 1st at midnight
+                    </div>
+                </div>
+                <button type="submit">Save Schedule</button>
+                <button type="button" id="cancel-btn" style="display: none;">Cancel</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Content Management</h2>
+            <div id="message-content"></div>
+
+            <form id="content-form">
+                <input type="hidden" id="content-id">
+                <div class="form-group">
+                    <label for="content-title">Title:</label>
+                    <input type="text" id="content-title" placeholder="e.g., New Product Launch" required>
+                </div>
+                <div class="form-group">
+                    <label for="content-description">Description:</label>
+                    <textarea id="content-description" rows="3" placeholder="Describe your content..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="content-urls">Resource Image URLs (one per line):</label>
+                    <textarea id="content-urls" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
+                </div>
+                <button type="submit">Save Content</button>
+                <button type="button" id="cancel-content-btn" style="display: none;">Cancel</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Your Content Items</h2>
+            <div id="content-list">
+                <p>Loading content items...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Your Scheduled Automations</h2>
+            <div id="schedules-list">
+                <p>Loading schedules...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script>
+        // Backend API URL
+        const BACKEND_API_URL = 'https://sma-backend-lujo.onrender.com/api';
+
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Check if Supabase is properly loaded
+                if (typeof _supabase === 'undefined') {
+                    console.error('Supabase is not properly initialized');
+                    showMessage('Error: Could not connect to the database. Please refresh the page.', 'error');
+                    return;
+                }
+
+                const { data: { user } } = await _supabase.auth.getUser();
+
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Load user workflows
+                await loadUserWorkflows();
+
+                // Load user schedules
+                await loadUserSchedules();
+
+                // Handle form submission
+                document.getElementById('schedule-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    await saveSchedule();
+                });
+
+                // Handle cancel button
+                document.getElementById('cancel-btn').addEventListener('click', cancelEdit);
+
+                // Handle schedule type change
+                document.getElementById('schedule-type').addEventListener('change', updateScheduleForm);
+
+                // Initialize schedule form
+                updateScheduleForm();
+
+                // Load user content items
+                await loadUserContentItems();
+
+                // Handle content form submission
+                document.getElementById('content-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    await saveContentItem();
+                });
+
+                // Handle cancel content button
+                document.getElementById('cancel-content-btn').addEventListener('click', cancelContentEdit);
+
+                // Set minimum datetime to current time
+                const now = new Date();
+                const minDatetime = now.toISOString().slice(0, 16);
+                document.getElementById('schedule-datetime').min = minDatetime;
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                showMessage('Error initializing page: ' + error.message, 'error');
+            }
+        });
+
+        // Load user's workflows and content items
+        async function loadUserWorkflows() {
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                // Load workflows
+                const { data: workflowData, error: workflowError } = await _supabase
+                    .from('user_workflows')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (workflowError) throw workflowError;
+
+                const workflowSelector = document.getElementById('workflow-selector');
+                workflowSelector.innerHTML = '';
+
+                if (workflowData.length === 0) {
+                    workflowSelector.innerHTML = '<option value="">No workflows found</option>';
+                } else {
+                    workflowData.forEach(workflow => {
+                        const option = document.createElement('option');
+                        option.value = workflow.workflow_id;
+                        option.textContent = `${workflow.name} (${workflow.workflow_id})`;
+                        workflowSelector.appendChild(option);
+                    });
+                }
+
+                // Load content items for dropdown
+                const response = await fetch(`${BACKEND_API_URL}/content/${user.id}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const contentSelector = document.getElementById('content-selector');
+                    contentSelector.innerHTML = '<option value="">None (no content)</option>';
+
+                    if (result.content && result.content.length > 0) {
+                        result.content.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.title;
+                            contentSelector.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading workflows and content:', error);
+                document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>';
+                document.getElementById('content-selector').innerHTML = '<option value="">Error loading content</option>';
+                showMessage('Error loading workflows and content: ' + error.message, 'error');
+            }
+        }
+
+        // Load user's content items
+        async function loadUserContentItems() {
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                const response = await fetch(`${BACKEND_API_URL}/content/${user.id}`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to load content items');
+                }
+
+                const listElement = document.getElementById('content-list');
+
+                if (!result.content || result.content.length === 0) {
+                    listElement.innerHTML = '<p>You haven\'t created any content items yet.</p>';
+                    return;
+                }
+
+                let html = '<div>';
+                result.content.forEach(item => {
+                    html += `
+                        <div class="schedule-item">
+                            <div>
+                                <strong>${item.title}</strong><br>
+                                <small>${item.description || 'No description'}</small><br>
+                                <small>Images: ${item.resource_urls ? item.resource_urls.length : 0}</small>
+                            </div>
+                            <div>
+                                <button onclick="editContentItem(${item.id}, '${item.title}', '${item.description || ''}', ${JSON.stringify(item.resource_urls || [])})">Edit</button>
+                                <button class="delete-btn" onclick="deleteContentItem(${item.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                listElement.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading content items:', error);
+                document.getElementById('content-list').innerHTML = '<p>Error loading content items.</p>';
+                showMessage('Error loading content items: ' + error.message, 'error', 'message-content');
+            }
+        }
+
+        // Save a content item
+        async function saveContentItem() {
+            try {
+                const contentId = document.getElementById('content-id').value;
+                const title = document.getElementById('content-title').value;
+                const description = document.getElementById('content-description').value;
+                const urlsText = document.getElementById('content-urls').value;
+
+                // Parse URLs from textarea (one per line)
+                let resourceUrls = [];
+                if (urlsText.trim()) {
+                    resourceUrls = urlsText.split('\n').map(url => url.trim()).filter(url => url);
+                }
+
+                if (!title) {
+                    showMessage('Please enter a title', 'error', 'message-content');
+                    return;
+                }
+
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                const contentData = {
+                    title: title,
+                    description: description,
+                    resource_urls: resourceUrls,
+                    user_id: user.id
+                };
+
+                let response;
+                if (contentId) {
+                    // Update existing content item
+                    response = await fetch(`${BACKEND_API_URL}/content/${contentId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(contentData)
+                    });
+                } else {
+                    // Create new content item
+                    response = await fetch(`${BACKEND_API_URL}/content`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(contentData)
+                    });
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to save content item');
+                }
+
+                // Show success message
+                showMessage(contentId ? 'Content item updated successfully!' : 'Content item created successfully!', 'success', 'message-content');
+
+                // Reset form
+                document.getElementById('content-form').reset();
+                document.getElementById('content-id').value = '';
+                document.getElementById('cancel-content-btn').style.display = 'none';
+
+                // Reload content items
+                await loadUserContentItems();
+            } catch (error) {
+                console.error('Error saving content item:', error);
+                showMessage('Error saving content item: ' + error.message, 'error', 'message-content');
+            }
+        }
+
+        // Edit a content item
+        function editContentItem(id, title, description, resourceUrls) {
+            document.getElementById('content-id').value = id;
+            document.getElementById('content-title').value = title;
+            document.getElementById('content-description').value = description;
+
+            // Convert array of URLs to textarea format (one per line)
+            const urlsText = Array.isArray(resourceUrls) ? resourceUrls.join('\n') : '';
+            document.getElementById('content-urls').value = urlsText;
+
+            document.getElementById('cancel-content-btn').style.display = 'inline-block';
+            // Scroll to the form
+            document.getElementById('content-form').scrollIntoView();
+        }
+
+        // Cancel content edit
+        function cancelContentEdit() {
+            document.getElementById('content-form').reset();
+            document.getElementById('content-id').value = '';
+            document.getElementById('cancel-content-btn').style.display = 'none';
+        }
+
+        // Delete a content item
+        async function deleteContentItem(contentId) {
+            if (!confirm('Are you sure you want to delete this content item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/content/${contentId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to delete content item');
+                }
+
+                showMessage('Content item deleted successfully!', 'success', 'message-content');
+                await loadUserContentItems();
+            } catch (error) {
+                console.error('Error deleting content item:', error);
+                showMessage('Error deleting content item: ' + error.message, 'error', 'message-content');
+            }
+        }
+
+        // Load user's schedules
+        async function loadUserSchedules() {
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/schedules`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to load schedules');
+                }
+
+                const listElement = document.getElementById('schedules-list');
+
+                if (!result.schedules || result.schedules.length === 0) {
+                    listElement.innerHTML = '<p>You haven\'t created any schedules yet.</p>';
+                    return;
+                }
+
+                let html = '<div>';
+                result.schedules.forEach(schedule => {
+                    // Try to parse cron expression for user-friendly display
+                    let scheduleDescription = `Workflow: ${schedule.workflow_id}`;
+
+                    try {
+                        const cronParts = schedule.cron_expression.split(' ');
+                        if (cronParts.length >= 5) {
+                            const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
+
+                            if (minute === '0' && hour === '0' && dayOfMonth !== '*' && month === '*' && dayOfWeek === '*') {
+                                scheduleDescription += `<br>Runs monthly on day ${dayOfMonth} at 12:00 AM`;
+                            } else if (minute === '0' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+                                scheduleDescription += `<br>Runs daily at ${hour}:00`;
+                            } else if (minute !== '*' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') {
+                                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const dayNames = dayOfWeek.split(',').map(d => days[parseInt(d)] || `day ${d}`).join(', ');
+                                scheduleDescription += `<br>Runs weekly on ${dayNames} at ${hour}:${minute}`;
+                            } else {
+                                scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
+                            }
+                        } else {
+                            scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
+                        }
+                    } catch (e) {
+                        scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
+                    }
+
+                    // Add content information if available
+                    if (schedule.content_items) {
+                        scheduleDescription += `<br>Content: ${schedule.content_items.title}`;
+                    }
+
+                    html += `
+                        <div class="schedule-item">
+                            <div>
+                                <strong>${schedule.name || 'Unnamed Schedule'}</strong><br>
+                                <small>${scheduleDescription}</small>
+                            </div>
+                            <div>
+                                <button onclick="editSchedule('${schedule.id}', '${schedule.workflow_id}', '${schedule.cron_expression}', '${schedule.name || ''}', ${schedule.content_item_id || 'null'})">Edit</button>
+                                <button class="delete-btn" onclick="deleteSchedule('${schedule.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                listElement.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading schedules:', error);
+                document.getElementById('schedules-list').innerHTML = '<p>Error loading schedules.</p>';
+                showMessage('Error loading schedules: ' + error.message, 'error');
+            }
+        }
+
+        // Save a schedule
+        async function saveSchedule() {
+            try {
+                const scheduleId = document.getElementById('schedule-id').value;
+                const workflowId = document.getElementById('workflow-selector').value;
+                const name = document.getElementById('schedule-name').value;
+                const scheduleType = document.getElementById('schedule-type').value;
+
+                // Get schedule data based on type
+                let scheduleData = {};
+                let cronExpression = '';
+
+                switch (scheduleType) {
+                    case 'one-time':
+                        const datetimeInput = document.getElementById('schedule-datetime').value;
+                        if (!datetimeInput) {
+                            showMessage('Please select a date and time', 'error');
+                            return;
+                        }
+
+                        // Validate that the datetime is in the future
+                        const selectedDatetime = new Date(datetimeInput);
+                        const now = new Date();
+                        if (selectedDatetime <= now) {
+                            showMessage('Please select a future date and time', 'error');
+                            return;
+                        }
+
+                        scheduleData.datetime = datetimeInput;
+                        // Convert datetime to standard cron expression for daily execution
+                        // We'll handle the one-time aspect in the backend by storing additional metadata
+                        cronExpression = `${selectedDatetime.getMinutes()} ${selectedDatetime.getHours()} ${selectedDatetime.getDate()} ${selectedDatetime.getMonth() + 1} *`;
+
+                        // Send the datetime in a format that preserves local time intention
+                        // We'll send the ISO string but the backend will interpret it as local time
+                        var isoDatetime = selectedDatetime.toISOString();
+                        break;
+
+                    case 'daily':
+                        const dailyTime = document.getElementById('schedule-time').value;
+                        if (!dailyTime) {
+                            showMessage('Please select a time', 'error');
+                            return;
+                        }
+                        scheduleData.time = dailyTime;
+                        const dailyTimeParts = dailyTime.split(':');
+                        cronExpression = `${dailyTimeParts[1]} ${dailyTimeParts[0]} * * *`;
+                        break;
+
+                    case 'weekly':
+                        const weeklyTime = document.getElementById('schedule-time').value;
+                        if (!weeklyTime) {
+                            showMessage('Please select a time', 'error');
+                            return;
+                        }
+
+                        // Get selected days
+                        const dayCheckboxes = document.querySelectorAll('#weekly-options input[type="checkbox"]:checked');
+                        if (dayCheckboxes.length === 0) {
+                            showMessage('Please select at least one day', 'error');
+                            return;
+                        }
+
+                        const days = Array.from(dayCheckboxes).map(cb => cb.value).join(',');
+                        scheduleData.time = weeklyTime;
+                        scheduleData.days = days.split(',');
+
+                        const weeklyTimeParts = weeklyTime.split(':');
+                        cronExpression = `${weeklyTimeParts[1]} ${weeklyTimeParts[0]} * * ${days}`;
+                        break;
+
+                    case 'monthly':
+                        const monthlyTime = document.getElementById('schedule-time').value;
+                        const monthDay = document.getElementById('month-day').value;
+                        if (!monthlyTime) {
+                            showMessage('Please select a time', 'error');
+                            return;
+                        }
+                        if (!monthDay || monthDay < 1 || monthDay > 31) {
+                            showMessage('Please enter a valid day of month (1-31)', 'error');
+                            return;
+                        }
+
+                        scheduleData.time = monthlyTime;
+                        scheduleData.day = monthDay;
+
+                        const monthlyTimeParts = monthlyTime.split(':');
+                        cronExpression = `${monthlyTimeParts[1]} ${monthlyTimeParts[0]} ${monthDay} * *`;
+                        break;
+
+                    case 'custom':
+                        cronExpression = document.getElementById('cron-expression').value;
+                        if (!cronExpression) {
+                            showMessage('Please enter a cron expression', 'error');
+                            return;
+                        }
+                        break;
+
+                    default:
+                        showMessage('Please select a schedule type', 'error');
+                        return;
+                }
+
+                if (!workflowId) {
+                    showMessage('Please select a workflow', 'error');
+                    return;
+                }
+
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                // Get selected content item
+                const contentItemId = document.getElementById('content-selector').value;
+
+                const scheduleDataToSend = {
+                    workflow_id: workflowId,
+                    cron_expression: cronExpression,
+                    name: name || `Schedule for ${workflowId}`,
+                    user_id: user.id,
+                    is_one_time: scheduleType === 'one-time',
+                    one_time_date: scheduleType === 'one-time' ? isoDatetime : null,
+                    content_item_id: contentItemId ? parseInt(contentItemId) : null
+                };
+
+                let response;
+                if (scheduleId) {
+                    // Update existing schedule
+                    response = await fetch(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(scheduleDataToSend)
+                    });
+                } else {
+                    // Create new schedule
+                    response = await fetch(`${BACKEND_API_URL}/schedules`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(scheduleDataToSend)
+                    });
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to save schedule');
+                }
+
+                // Show success message
+                showMessage(scheduleId ? 'Schedule updated successfully!' : 'Schedule created successfully!', 'success');
+
+                // Reset form
+                document.getElementById('schedule-form').reset();
+                document.getElementById('schedule-id').value = '';
+                document.getElementById('cancel-btn').style.display = 'none';
+
+                // Reset form visibility
+                updateScheduleForm();
+
+                // Reload schedules
+                await loadUserSchedules();
+            } catch (error) {
+                console.error('Error saving schedule:', error);
+                showMessage('Error saving schedule: ' + error.message, 'error');
+            }
+        }
+
+        // Edit a schedule
+        function editSchedule(id, workflowId, cronExpression, name, contentItemId) {
+            document.getElementById('schedule-id').value = id;
+            document.getElementById('workflow-selector').value = workflowId;
+            document.getElementById('schedule-name').value = name;
+
+            // Set content item if available
+            if (contentItemId) {
+                document.getElementById('content-selector').value = contentItemId;
+            } else {
+                document.getElementById('content-selector').value = '';
+            }
+
+            // For editing, default to custom cron expression
+            document.getElementById('schedule-type').value = 'custom';
+            document.getElementById('cron-expression').value = cronExpression;
+
+            // Show custom cron form
+            updateScheduleForm();
+
+            document.getElementById('cancel-btn').style.display = 'inline-block';
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            document.getElementById('schedule-form').reset();
+            document.getElementById('schedule-id').value = '';
+            document.getElementById('cancel-btn').style.display = 'none';
+
+            // Reset form visibility
+            updateScheduleForm();
+
+            // Clear checkboxes
+            document.querySelectorAll('#weekly-options input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+
+        // Update schedule form visibility based on selected type
+        function updateScheduleForm() {
+            const scheduleType = document.getElementById('schedule-type').value;
+
+            // Hide all schedule options first
+            document.getElementById('one-time-schedule').style.display = 'none';
+            document.getElementById('recurring-options').style.display = 'none';
+            document.getElementById('custom-cron').style.display = 'none';
+            document.getElementById('weekly-options').style.display = 'none';
+            document.getElementById('monthly-options').style.display = 'none';
+
+            // Show relevant options based on schedule type
+            switch(scheduleType) {
+                case 'one-time':
+                    document.getElementById('one-time-schedule').style.display = 'block';
+                    break;
+                case 'daily':
+                    document.getElementById('recurring-options').style.display = 'block';
+                    break;
+                case 'weekly':
+                    document.getElementById('recurring-options').style.display = 'block';
+                    document.getElementById('weekly-options').style.display = 'block';
+                    break;
+                case 'monthly':
+                    document.getElementById('recurring-options').style.display = 'block';
+                    document.getElementById('monthly-options').style.display = 'block';
+                    break;
+                case 'custom':
+                    document.getElementById('custom-cron').style.display = 'block';
+                    break;
+            }
+        }
+
+        // Delete a schedule
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('Are you sure you want to delete this schedule?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to delete schedule');
+                }
+
+                showMessage('Schedule deleted successfully!', 'success');
+                await loadUserSchedules();
+            } catch (error) {
+                console.error('Error deleting schedule:', error);
+                showMessage('Error deleting schedule: ' + error.message, 'error');
+            }
+        }
+
+        // Show message to user
+        function showMessage(text, type, elementId = 'message') {
+            const messageElement = document.getElementById(elementId);
+            messageElement.innerHTML = `<div class="message ${type}">${text}</div>`;
+
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                messageElement.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

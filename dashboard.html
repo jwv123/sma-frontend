@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Social Media Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #001f3f, #808080);
+            min-height: 100vh;
+            color: white;
+        }
+
+        input, textarea {
+            color: black;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .welcome-section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 1rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card button {
+            text-decoration: underline;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #002d50;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Social Media Automation</h1>
+            <button id="logout-btn" class="logout-btn">Logout</button>
+        </div>
+
+        <div class="welcome-section">
+            <h2>Welcome back, <span id="company-name">Company</span>!</h2>
+            <p>Manage your social media accounts and automate your posts from this dashboard.</p>
+        </div>
+
+        <div class="card-grid">
+            <!-- <div class="card">
+                <h3>Scheduled Posts</h3>
+                <p>View and manage your scheduled social media posts.</p>
+                <button>View Posts</button>
+            </div>
+            <div class="card">
+                <h3>Analytics</h3>
+                <p>Check the performance of your social media campaigns.</p>
+                <button>View Analytics</button>
+            </div>
+            <div class="card">
+                <h3>Content Calendar</h3>
+                <p>Plan and organize your content strategy.</p>
+                <button>Open Calendar</button>
+            </div> -->
+            <div class="card">
+                <h3>Workflow Management</h3>
+                <p>Manage and trigger your n8n workflows.</p>
+                <button onclick="window.location.href='workflows.html'">Manage Workflows</button>
+            </div>
+            <div class="card">
+                <h3>Schedule Automation</h3>
+                <p>Set up automated workflow triggers.</p>
+                <button onclick="window.location.href='scheduler.html'">Manage Schedules</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Your Workflows</h3>
+            <div id="user-workflows">
+                <p>Loading your workflows...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', async function() {
+            const { data: { user } } = await _supabase.auth.getUser();
+
+            if (!user) {
+                // Redirect to login if not logged in
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Get user profile to display company name
+            const { data: profile, error } = await _supabase
+                .from('profiles')
+                .select('company')
+                .eq('id', user.id)
+                .single();
+
+            if (error) {
+                console.error('Error fetching profile:', error);
+                document.getElementById('company-name').textContent = user.email;
+            } else {
+                document.getElementById('company-name').textContent = profile.company;
+            }
+
+            // Load user workflows
+            loadUserWorkflows();
+
+            // Logout functionality
+            document.getElementById('logout-btn').addEventListener('click', async function() {
+                const { error } = await _supabase.auth.signOut();
+                if (error) {
+                    console.error('Error logging out:', error);
+                }
+                window.location.href = 'index.html';
+            });
+        });
+
+        // Load and display user workflows
+        async function loadUserWorkflows() {
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+
+                const { data, error } = await _supabase
+                    .from('user_workflows')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(5); // Limit to 5 most recent workflows
+
+                if (error) throw error;
+
+                const workflowsElement = document.getElementById('user-workflows');
+
+                if (data.length === 0) {
+                    workflowsElement.innerHTML = '<p>You haven\'t saved any workflows yet. <a href="workflows.html">Add your first workflow</a>.</p>';
+                    return;
+                }
+
+                let html = '<div>';
+                data.forEach(workflow => {
+                    html += `
+                        <div class="workflow-item" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+                            <div>
+                                <strong>${workflow.name}</strong>
+                            </div>
+                            <button class="trigger-btn" onclick="triggerWorkflowButton('${workflow.workflow_id}', event)" style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Trigger</button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                workflowsElement.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading workflows:', error);
+                document.getElementById('user-workflows').innerHTML = '<p>Error loading workflows.</p>';
+            }
+        }
+
+        // Trigger a workflow via webhook (button handler)
+        async function triggerWorkflowButton(workflowId, event) {
+            // Get the button element that was clicked
+            const btn = event ? event.target : (window.event ? window.event.target : null);
+
+            try {
+                // Validate input
+                if (!workflowId) {
+                    alert('Error: Workflow ID is missing');
+                    if (btn) {
+                        btn.textContent = 'Trigger';
+                        btn.disabled = false;
+                    }
+                    return;
+                }
+
+                console.log('Triggering workflow with ID:', workflowId);
+
+                if (btn) {
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Triggering...';
+                    btn.disabled = true;
+                }
+
+                // Check if the global triggerWorkflow function exists
+                if (typeof window.triggerWorkflow !== 'function') {
+                    throw new Error('triggerWorkflow function is not available');
+                }
+
+                // Call the global triggerWorkflow function
+                const result = await window.triggerWorkflow(workflowId);
+
+                console.log('Workflow trigger result:', result);
+
+                // Check if result exists and has success property
+                if (result && typeof result.success !== 'undefined') {
+                    if (result.success) {
+                        // Show success message
+                        alert(result.message);
+                    } else {
+                        // Show error message with more details if available
+                        let errorMessage = result.message || 'Unknown error occurred';
+                        if (result.errorDetails) {
+                            errorMessage += ' (' + result.errorDetails + ')';
+                        }
+                        if (result.details) {
+                            errorMessage += ' - ' + result.details;
+                        }
+                        alert('Error triggering workflow: ' + errorMessage);
+                    }
+                } else {
+                    // Handle case where result doesn't have success property
+                    let errorMessage = result && result.message ? result.message : 'Unknown error occurred';
+                    if (result && result.errorDetails) {
+                        errorMessage += ' (' + result.errorDetails + ')';
+                    }
+                    alert('Error triggering workflow: ' + errorMessage);
+                }
+
+                // Restore button
+                if (btn) {
+                    btn.textContent = 'Trigger';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error triggering workflow:', error);
+                alert('Error triggering workflow: ' + (error.message || 'Unknown error'));
+
+                // Restore button
+                if (btn) {
+                    btn.textContent = 'Trigger';
+                    btn.disabled = false;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #001f3f, #808080);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        body input, body textarea {
+            color: black;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        div.nav-links {
+            /* display: flex; */
+            /* gap: 20px; */
+            padding-top: 50px;
+            margin: 0 auto;
+            width: 100%;
+            font-size: 15px;
+            
+        }
+
+        a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 1px solid white;
+            border-radius: 5px;
+            transition: background 0.3s;
+            height: 40px;
+        }
+
+        a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #dashboard-link {
+            display: none;
+            height: 40px;
+            padding: 10px 20px;
+            margin-top: 15px;
+            /* vertical-align: center; */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Social Media Automation</h1>
+        <p>Streamline your social media management</p>
+        <div class="nav-links">
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
+            <br />
+            <a id="dashboard-link" href="dashboard.html">Dashboard</a>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script>
+        // Check if user is logged in and show dashboard link if they are
+        document.addEventListener('DOMContentLoaded', async function() {
+            const { data: { user } } = await _supabase.auth.getUser();
+
+            if (user) {
+                document.getElementById('dashboard-link').style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+</html>
