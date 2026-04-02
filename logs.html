@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execution Logs - Social Media Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #001f3f, #808080);
+            min-height: 100vh;
+            color: white;
+        }
+
+        body input, body textarea {
+            color: black;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 2rem;
+        }
+
+        .log-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #ccc;
+        }
+
+        .log-item.success {
+            border-left-color: #28a745;
+        }
+
+        .log-item.success .log-status {
+            color: #28a745;
+        }
+
+        .log-item.error {
+            border-left-color: #dc3545;
+        }
+
+        .log-item.error .log-status {
+            color: #dc3545;
+        }
+
+        .log-item.warning {
+            border-left-color: #ffc107;
+        }
+
+        .log-item.warning .log-status {
+            color: #ffc107;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .log-schedule-id {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .log-time {
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        .log-status {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .log-workflow {
+            font-family: monospace;
+            color: #4db8ff;
+        }
+
+        .log-error {
+            background: rgba(220, 53, 69, 0.1);
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-top: 0.75rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #ffbfbf;
+        }
+
+        .log-response {
+            background: rgba(40, 167, 69, 0.1);
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-top: 0.75rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #dfffdf;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-details {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            color: white;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: none;
+            color: black;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #002d50;
+        }
+
+        .btn-primary {
+            background: #0056b3;
+        }
+
+        .btn-primary:hover {
+            background: #004494;
+        }
+
+        .message {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
+
+        .message.success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .message.error {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #ccc;
+        }
+
+        .no-logs {
+            text-align: center;
+            padding: 2rem;
+            color: #aaa;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:hover {
+            background: #002d50;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Execution Logs</h1>
+            <a href="dashboard.html" class="back-link">← Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h2>Log Filters</h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="status-filter">
+                        <option value="">All</option>
+                        <option value="success">Success</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" id="from-date">
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" id="to-date">
+                </div>
+                <button id="apply-filters" class="btn">Apply Filters</button>
+                <button id="refresh-logs" class="btn btn-primary">Refresh</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="header">
+                <h2>Execution History</h2>
+                <span id="log-count" style="color: #ccc;"></span>
+            </div>
+            <div id="logs-list">
+                <div class="loading">Loading logs...</div>
+            </div>
+        </div>
+
+        <div class="pagination" id="pagination" style="display: none;">
+            <button id="prev-page">Previous</button>
+            <span id="page-info">Page 1 of 1</span>
+            <button id="next-page">Next</button>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                if (typeof _supabase === 'undefined') {
+                    console.error('Supabase is not properly initialized');
+                    showMessage('Error: Could not connect to the database. Please refresh the page.', 'error');
+                    return;
+                }
+
+                const { data: { user } } = await _supabase.auth.getUser();
+
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Initialize pagination
+                currentPage = 1;
+                logsPerPage = 50;
+
+                // Load logs on initial load
+                loadLogs();
+
+                // Event listeners
+                document.getElementById('refresh-logs').addEventListener('click', () => {
+                    loadLogs();
+                });
+
+                document.getElementById('apply-filters').addEventListener('click', () => {
+                    currentPage = 1;
+                    loadLogs();
+                });
+
+                document.getElementById('prev-page').addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        loadLogs();
+                    }
+                });
+
+                document.getElementById('next-page').addEventListener('click', () => {
+                    if (hasNextPage) {
+                        currentPage++;
+                        loadLogs();
+                    }
+                });
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                showMessage('Error initializing page: ' + error.message, 'error');
+            }
+        });
+
+        let currentPage = 1;
+        let logsPerPage = 50;
+        let hasNextPage = false;
+
+        // Load logs with filters
+        async function loadLogs() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const fromDate = document.getElementById('from-date').value;
+            const toDate = document.getElementById('to-date').value;
+
+            const logsList = document.getElementById('logs-list');
+            logsList.innerHTML = '<div class="loading">Loading logs...</div>';
+
+            try {
+                // Get user ID
+                const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                // Build query with joins to get schedule and workflow info
+                let query = _supabase
+                    .from('schedule_executions')
+                    .select(`
+                        id,
+                        schedule_id,
+                        executed_at,
+                        success,
+                        response,
+                        workflow_schedules (
+                            id,
+                            workflow_id,
+                            name,
+                            description,
+                            active
+                        )
+                    `)
+                    .order('executed_at', { ascending: false })
+                    .limit(logsPerPage + 1); // Get one extra to check if there's a next page
+
+                // Filter by status
+                if (statusFilter === 'success') {
+                    query = query.eq('success', true);
+                } else if (statusFilter === 'error') {
+                    query = query.eq('success', false);
+                }
+
+                // Filter by date range
+                if (fromDate) {
+                    query = query.gte('executed_at', fromDate + 'T00:00:00');
+                }
+                if (toDate) {
+                    query = query.lte('executed_at', toDate + 'T23:59:59');
+                }
+
+                const { data: logs, error } = await query;
+
+                if (error) {
+                    throw error;
+                }
+
+                // Check if there's a next page
+                hasNextPage = logs.length > logsPerPage;
+                if (hasNextPage) {
+                    logs.pop(); // Remove the extra log
+                }
+
+                // Check if there's a previous page
+                const hasPreviousPage = currentPage > 1;
+
+                renderLogs(logs);
+
+                // Update pagination controls
+                updatePagination(hasPreviousPage, hasNextPage);
+                document.getElementById('log-count').textContent = `${logs.length} log(s) found`;
+
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                document.getElementById('logs-list').innerHTML = `<div class="message error">Error loading logs: ${error.message}</div>`;
+            }
+        }
+
+        // Render logs to the page
+        function renderLogs(logs) {
+            const logsList = document.getElementById('logs-list');
+
+            if (logs.length === 0) {
+                logsList.innerHTML = '<div class="no-logs">No logs found matching your filters.</div>';
+                return;
+            }
+
+            let html = '';
+            logs.forEach(log => {
+                const isSuccess = log.success;
+                const statusClass = isSuccess ? 'success' : 'error';
+                const statusText = isSuccess ? '✓ Success' : '✗ Failed';
+                const statusColor = isSuccess ? '#28a745' : '#dc3545';
+
+                // Parse the response for better display
+                let responseDisplay = '';
+                let errorDisplay = '';
+
+                if (log.response) {
+                    try {
+                        const responseJson = JSON.parse(log.response);
+                        responseDisplay = `<div class="log-response"><strong>Response:</strong><br>${JSON.stringify(responseJson, null, 2)}</div>`;
+                    } catch (e) {
+                        // Response is not JSON, display as plain text
+                        if (isSuccess) {
+                            responseDisplay = `<div class="log-response"><strong>Response:</strong><br>${escapeHtml(log.response)}</div>`;
+                        } else {
+                            errorDisplay = `<div class="log-error"><strong>Error:</strong><br>${escapeHtml(log.response)}</div>`;
+                        }
+                    }
+                } else {
+                    if (!isSuccess) {
+                        errorDisplay = '<div class="log-error"><strong>Error:</strong><br>No response received</div>';
+                    }
+                }
+
+                // Extract workflow info from the joined data
+                let workflowInfo = '';
+                if (log.workflow_schedules) {
+                    workflowInfo = `
+                        <span class="log-workflow">${escapeHtml(log.workflow_schedules.workflow_id || 'Unknown')}</span>
+                        ${log.workflow_schedules.name ? `(${escapeHtml(log.workflow_schedules.name)})` : ''}
+                    `;
+                } else {
+                    workflowInfo = '<span class="log-workflow">Unknown workflow</span>';
+                }
+
+                // Format executed_at for display
+                const executedAt = new Date(log.executed_at).toLocaleString();
+
+                html += `
+                    <div class="log-item ${statusClass}">
+                        <div class="log-header">
+                            <div>
+                                <span class="log-schedule-id">ID: ${log.id}</span>
+                                <span class="log-status" style="color: ${statusColor};">${statusText}</span>
+                            </div>
+                            <div class="log-time">${executedAt}</div>
+                        </div>
+
+                        <div class="log-details">
+                            <strong>Workflow:</strong> ${workflowInfo}
+                        </div>
+
+                        ${responseDisplay}
+                        ${errorDisplay}
+                    </div>
+                `;
+            });
+
+            logsList.innerHTML = html;
+        }
+
+        // Update pagination controls
+        function updatePagination(hasPrevious, hasNext) {
+            const pagination = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+
+            pagination.style.display = 'flex';
+            pageInfo.textContent = `Page ${currentPage} of ${hasNext ? currentPage + 1 : currentPage}`;
+
+            prevBtn.disabled = !hasPrevious;
+            nextBtn.disabled = !hasNext;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show message to user
+        function showMessage(text, type) {
+            // Create a temporary message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+
+            // Insert at the top of the logs list container
+            const logsList = document.getElementById('logs-list');
+            logsList.parentNode.insertBefore(messageDiv, logsList);
+
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
