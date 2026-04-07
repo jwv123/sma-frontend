@@ -2,6 +2,9 @@
 const SUPABASE_URL = 'https://jvysmxdkiynzqlnzidze.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2eXNteGRraXluenFsbnppZHplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NzE0NTEsImV4cCI6MjA4NzM0NzQ1MX0.HaKg31YZg_lKoVz5NxWkAq-N3T1Gt2DTk3ZYfFW_TqY';
 
+// Backend API URL - Production
+const BACKEND_API_URL = 'https://sma-backend-lujo.onrender.com/api';
+
 // Initialize Supabase client with error handling
 let _supabase;
 try {
@@ -135,7 +138,7 @@ async function triggerWorkflow(workflowId) {
         }
 
         // Construct the n8n webhook URL
-        const n8nWebhookUrl = `https://ef0ps4gk.rcsrv.net/webhook/${encodeURIComponent(sanitizedWorkflowId)}`;
+        const n8nWebhookUrl = `${process.env.WEBHOOK_URL || 'https://ef0ps4gk.rcsrv.net/webhook/'}/${encodeURIComponent(sanitizedWorkflowId)}`;
 
         console.log(`Triggering workflow with URL: ${n8nWebhookUrl}`);
         console.log(`Original workflow ID: "${workflowId}", Sanitized: "${sanitizedWorkflowId}"`);
@@ -319,7 +322,7 @@ window.testNetworkConnectivity = async function testNetworkConnectivity() {
 window.testWorkflowUrl = async function testWorkflowUrl(workflowId = 'test') {
     console.log('Testing workflow URL with ID:', workflowId);
     try {
-        const url = `https://ef0ps4gk.rcsrv.net/webhook-test/${workflowId}`;
+        const url = `${process.env.WEBHOOK_URL || 'https://ef0ps4gk.rcsrv.net/webhook/'}/${workflowId}`;
         console.log('Testing URL:', url);
 
         // Test if the URL is accessible
