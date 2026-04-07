@@ -135,7 +135,7 @@ async function triggerWorkflow(workflowId) {
         }
 
         // Construct the n8n webhook URL
-        const n8nWebhookUrl = `https://ef0ps4gk.rcsrv.net/webhook-test/${encodeURIComponent(sanitizedWorkflowId)}`;
+        const n8nWebhookUrl = `https://ef0ps4gk.rcsrv.net/webhook/${encodeURIComponent(sanitizedWorkflowId)}`;
 
         console.log(`Triggering workflow with URL: ${n8nWebhookUrl}`);
         console.log(`Original workflow ID: "${workflowId}", Sanitized: "${sanitizedWorkflowId}"`);
