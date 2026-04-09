@@ -583,6 +583,11 @@
                         scheduleDescription += '<br>Content: ' + schedule.content_items.title;
                     }
 
+                    // Add next execution time if available
+                    if (schedule.next_execution) {
+                        scheduleDescription += '<br><strong style="color: #4CAF50;">Next execution: ' + schedule.next_execution + '</strong>';
+                    }
+
                     html += '<div class="schedule-item"><div><strong>' + (schedule.name || 'Unnamed Schedule') + '</strong><br><small>' + scheduleDescription + '</small></div><div><button onclick="editSchedule(\'' + schedule.id + '\', \'' + schedule.workflow_id + '\', \'' + schedule.cron_expression + '\', \'' + (schedule.name || '') + '\', ' + (schedule.content_item_id || 'null') + ')">Edit</button><button class="delete-btn" onclick="deleteSchedule(\'' + schedule.id + '\')">Delete</button></div></div>';
                 });
                 html += '</div>';
