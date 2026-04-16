@@ -189,13 +189,13 @@
                 <div class="form-group" id="one-time-schedule" style="display: none;">
                     <label for="schedule-datetime">Date & Time:</label>
                     <input type="datetime-local" id="schedule-datetime" min="">
-                    <small>Select a future date and time for this one-time execution</small>
+                    <small>Select a future date and time for this one-time execution <span id="schedule-timezone-display-onetime" style="color: #4db8ff;"></span></small>
                 </div>
 
                 <div class="form-group" id="recurring-options" style="display: none;">
                     <label for="schedule-time">Time of Day:</label>
                     <input type="time" id="schedule-time">
-                    <small>Select the time when this schedule should run</small>
+                    <small>Select the time when this schedule should run <span id="schedule-timezone-display" style="color: #4db8ff;"></span></small>
 
                     <div id="weekly-options" style="display: none; margin-top: 1rem;">
                         <label>Days of Week:</label>
@@ -324,6 +324,20 @@
 
                 // Handle cancel content button
                 document.getElementById('cancel-content-btn').addEventListener('click', cancelContentEdit);
+
+                // Fetch and display server timezone
+                try {
+                    const tzResponse = await fetch(BACKEND_API_URL + '/timezone');
+                    const tzResult = await tzResponse.json();
+                    if (tzResult.success && tzResult.timezone) {
+                        const tzDisplay = document.getElementById('schedule-timezone-display');
+                        const tzDisplayOnetime = document.getElementById('schedule-timezone-display-onetime');
+                        if (tzDisplay) tzDisplay.textContent = '(' + tzResult.timezone + ')';
+                        if (tzDisplayOnetime) tzDisplayOnetime.textContent = '(' + tzResult.timezone + ')';
+                    }
+                } catch (e) {
+                    console.log('Could not fetch timezone:', e);
+                }
 
                 // Set minimum datetime to current time
                 const now = new Date();

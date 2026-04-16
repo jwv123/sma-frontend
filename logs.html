@@ -296,6 +296,10 @@
     </div>
 
     <script>
+        let currentPage = 1;
+        let logsPerPage = 50;
+        let hasNextPage = false;
+
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof _supabase === 'undefined') {
@@ -317,6 +321,7 @@
                 loadLogs();
 
                 document.getElementById('refresh-logs').addEventListener('click', () => {
+                    currentPage = 1;
                     loadLogs();
                 });
 
@@ -344,10 +349,6 @@
             }
         });
 
-        let currentPage = 1;
-        let logsPerPage = 50;
-        let hasNextPage = false;
-
         async function loadLogs() {
             const statusFilter = document.getElementById('status-filter').value;
             const fromDate = document.getElementById('from-date').value;
@@ -361,6 +362,10 @@
                 if (!user) {
                     throw new Error('User not authenticated');
                 }
+
+                // Build query with joins to get schedule and workflow info
+                const from = (currentPage - 1) * logsPerPage;
+                const to = from + logsPerPage;
 
                 let query = _supabase
                     .from('schedule_executions')
@@ -379,7 +384,7 @@
                         )
                     `)
                     .order('executed_at', { ascending: false })
-                    .limit(logsPerPage + 1);
+                    .range(from, to);
 
                 if (statusFilter === 'success') {
                     query = query.eq('success', true);
@@ -391,7 +396,7 @@
                     query = query.gte('executed_at', fromDate + 'T00:00:00');
                 }
                 if (toDate) {
-                    query = query.lte('executed_at', toDate + 'T23:59:59');
+                    query = query.lte('executed_at', toDate + 'T23:59:59.999');
                 }
 
                 const { data: logs, error } = await query;

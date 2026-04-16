@@ -216,7 +216,9 @@
 
                 let html = '<div>';
                 data.forEach(workflow => {
-                    html += '<div class="workflow-item"><div><strong>' + workflow.name + '</strong><br><small>ID: ' + workflow.workflow_id + '</small></div><div><button class="trigger-btn" onclick="console.log(\'Button clicked, workflowId:\', \'' + workflow.workflow_id + '\'); triggerWorkflowButton(\'' + workflow.workflow_id + '\'.toString(), event || window.event)">Trigger</button><button class="delete-btn" onclick="deleteWorkflow(' + workflow.id + ', this)">Delete</button></div></div>';
+                    const safeWorkflowId = workflow.workflow_id.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const safeId = String(workflow.id).replace(/'/g, "\\'");
+                    html += '<div class="workflow-item"><div><strong>' + workflow.name + '</strong><br><small>ID: ' + workflow.workflow_id + '</small></div><div><button class="trigger-btn" onclick="triggerWorkflowButton(\'' + safeWorkflowId + '\', event || window.event)">Trigger</button><button class="delete-btn" onclick="deleteWorkflow(\'' + safeId + '\', this)">Delete</button></div></div>';
                 });
                 html += '</div>';
 
