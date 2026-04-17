@@ -137,13 +137,13 @@
             const result = await loginUser(email, password);
 
             if (result.success) {
-                document.getElementById('message').innerHTML = '<div class="message success">Welcome back to ' + result.user.company + '!</div>';
+                document.getElementById('message').innerHTML = '<div class="message success">Welcome back to ' + escapeHtml(result.user.company) + '!</div>';
                 // Redirect to dashboard after successful login
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 2000);
             } else {
-                document.getElementById('message').innerHTML = '<div class="message error">' + result.message + '</div>';
+                document.getElementById('message').innerHTML = '<div class="message error">' + escapeHtml(result.message) + '</div>';
             }
         });
     </script>

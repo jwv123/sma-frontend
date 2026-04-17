@@ -153,13 +153,13 @@
             const result = await registerUser(username, email, password, company);
 
             if (result.success) {
-                document.getElementById('message').innerHTML = '<div class="message success">' + result.message + '</div>';
+                document.getElementById('message').innerHTML = '<div class="message success">' + escapeHtml(result.message) + '</div>';
                 // Redirect to login page after successful registration
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2000);
             } else {
-                document.getElementById('message').innerHTML = '<div class="message error">' + result.message + '</div>';
+                document.getElementById('message').innerHTML = '<div class="message error">' + escapeHtml(result.message) + '</div>';
             }
         });
     </script>

@@ -6,7 +6,6 @@
     <title>Scheduler - Social Media Automation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
     <style>
         body {
             margin: 0;
@@ -148,7 +147,7 @@
         <div class="header">
             <h1>Social Media Automation</h1>
             <div class="nav-links" style="display: flex; gap: 1rem;">
-                <a href="dashboard.html" class="back-link">Dashboard</a>
+                <a href="dashboard.html" class="back-link">&larr; Dashboard</a>
                 <a href="logs.html" class="back-link">View Logs</a>
             </div>
         </div>
@@ -189,13 +188,13 @@
                 <div class="form-group" id="one-time-schedule" style="display: none;">
                     <label for="schedule-datetime">Date & Time:</label>
                     <input type="datetime-local" id="schedule-datetime" min="">
-                    <small>Select a future date and time for this one-time execution <span id="schedule-timezone-display-onetime" style="color: #4db8ff;"></span></small>
+                    <small>Select a future date and time (server timezone: <span id="schedule-timezone-display-onetime">loading...</span>)</small>
                 </div>
 
                 <div class="form-group" id="recurring-options" style="display: none;">
                     <label for="schedule-time">Time of Day:</label>
                     <input type="time" id="schedule-time">
-                    <small>Select the time when this schedule should run <span id="schedule-timezone-display" style="color: #4db8ff;"></span></small>
+                    <small>Select the time when this schedule should run (server timezone: <span id="schedule-timezone-display">loading...</span>)</small>
 
                     <div id="weekly-options" style="display: none; margin-top: 1rem;">
                         <label>Days of Week:</label>
@@ -224,9 +223,9 @@
                     <div class="cron-help">
                         <strong>Cron Format:</strong> minute hour day month day-of-week<br>
                         Examples:<br>
-                        0 9 * * * = Daily at 9:00 AM<br>
-                        0 15 * * 1 = Weekly on Monday at 3:00 PM<br>
-                        0 0 1 * * = Monthly on the 1st at midnight
+                        &bull; 0 9 * * * = Daily at 9:00 AM<br>
+                        &bull; 0 15 * * 1 = Weekly on Monday at 3:00 PM<br>
+                        &bull; 0 0 1 * * = Monthly on the 1st at midnight
                     </div>
                 </div>
                 <button type="submit">Save Schedule</button>
@@ -250,7 +249,7 @@
                 </div>
                 <div class="form-group">
                     <label for="content-urls">Resource Image URLs (one per line):</label>
-                    <textarea id="content-urls" rows="3" placeholder="https://example.com/image1.jpg"></textarea>
+                    <textarea id="content-urls" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
                 </div>
                 <button type="submit">Save Content</button>
                 <button type="button" id="cancel-content-btn" style="display: none;">Cancel</button>
@@ -272,8 +271,10 @@
         </div>
     </div>
 
+    <script src="supabase.js"></script>
     <script>
-        // Backend API URL is defined in supabase.js as BACKEND_API_URL
+        // Backend API URL
+        const BACKEND_API_URL = 'https://sma-backend-lujo.onrender.com/api';
 
         // Store loaded data for edit lookups (avoids inline string escaping issues)
         let contentItemsData = [];
@@ -294,6 +295,25 @@
                 if (!user) {
                     window.location.href = 'login.html';
                     return;
+                }
+
+                // Fetch and display the server's schedule timezone
+                try {
+                    const tzResponse = await apiRequest(`${BACKEND_API_URL}/timezone`);
+                    const tzResult = await tzResponse.json();
+                    if (tzResult.success && tzResult.timezone) {
+                        const tzDisplay = tzResult.timezone.replace('_', ' ');
+                        const displayEl = document.getElementById('schedule-timezone-display');
+                        const displayEl2 = document.getElementById('schedule-timezone-display-onetime');
+                        if (displayEl) displayEl.textContent = tzDisplay;
+                        if (displayEl2) displayEl2.textContent = tzDisplay;
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch server timezone:', e);
+                    const displayEl = document.getElementById('schedule-timezone-display');
+                    const displayEl2 = document.getElementById('schedule-timezone-display-onetime');
+                    if (displayEl) displayEl.textContent = 'unknown';
+                    if (displayEl2) displayEl2.textContent = 'unknown';
                 }
 
                 // Load user workflows
@@ -328,20 +348,6 @@
 
                 // Handle cancel content button
                 document.getElementById('cancel-content-btn').addEventListener('click', cancelContentEdit);
-
-                // Fetch and display server timezone
-                try {
-                    const tzResponse = await fetch(BACKEND_API_URL + '/timezone');
-                    const tzResult = await tzResponse.json();
-                    if (tzResult.success && tzResult.timezone) {
-                        const tzDisplay = document.getElementById('schedule-timezone-display');
-                        const tzDisplayOnetime = document.getElementById('schedule-timezone-display-onetime');
-                        if (tzDisplay) tzDisplay.textContent = '(' + tzResult.timezone + ')';
-                        if (tzDisplayOnetime) tzDisplayOnetime.textContent = '(' + tzResult.timezone + ')';
-                    }
-                } catch (e) {
-                    console.log('Could not fetch timezone:', e);
-                }
 
                 // Set minimum datetime to current time
                 const now = new Date();
@@ -379,13 +385,13 @@
                     workflowData.forEach(workflow => {
                         const option = document.createElement('option');
                         option.value = workflow.workflow_id;
-                        option.textContent = workflow.name + ' (' + workflow.workflow_id + ')';
+                        option.textContent = `${workflow.name} (${workflow.workflow_id})`;
                         workflowSelector.appendChild(option);
                     });
                 }
 
                 // Load content items for dropdown
-                const response = await fetch(BACKEND_API_URL + '/content/' + user.id);
+                const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
 
                 if (result.success) {
@@ -417,7 +423,7 @@
                     throw new Error('User not authenticated');
                 }
 
-                const response = await fetch(BACKEND_API_URL + '/content/' + user.id);
+                const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
 
                 if (!result.success) {
@@ -436,7 +442,19 @@
 
                 let html = '<div>';
                 result.content.forEach(item => {
-                    html += '<div class="schedule-item"><div><strong>' + item.title + '</strong><br><small>' + (item.description || 'No description') + '</small><br><small>Images: ' + (item.resource_urls ? item.resource_urls.length : 0) + '</small></div><div><button onclick="editContentItem(' + item.id + ')">Edit</button><button class="delete-btn" onclick="deleteContentItem(' + item.id + ')">Delete</button></div></div>';
+                    html += `
+                        <div class="schedule-item">
+                            <div>
+                                <strong>${escapeHtml(item.title)}</strong><br>
+                                <small>${escapeHtml(item.description || 'No description')}</small><br>
+                                <small>Images: ${item.resource_urls ? item.resource_urls.length : 0}</small>
+                            </div>
+                            <div>
+                                <button onclick="editContentItem(${item.id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteContentItem(${item.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
                 });
                 html += '</div>';
 
@@ -481,19 +499,15 @@
 
                 let response;
                 if (contentId) {
-                    response = await fetch(BACKEND_API_URL + '/content/' + contentId, {
+                    // Update existing content item
+                    response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                         body: JSON.stringify(contentData)
                     });
                 } else {
-                    response = await fetch(BACKEND_API_URL + '/content', {
+                    // Create new content item
+                    response = await apiRequest(`${BACKEND_API_URL}/content`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                         body: JSON.stringify(contentData)
                     });
                 }
@@ -504,10 +518,15 @@
                     throw new Error(result.error || 'Failed to save content item');
                 }
 
+                // Show success message
                 showMessage(contentId ? 'Content item updated successfully!' : 'Content item created successfully!', 'success', 'message-content');
+
+                // Reset form
                 document.getElementById('content-form').reset();
                 document.getElementById('content-id').value = '';
                 document.getElementById('cancel-content-btn').style.display = 'none';
+
+                // Reload content items
                 await loadUserContentItems();
             } catch (error) {
                 console.error('Error saving content item:', error);
@@ -527,9 +546,13 @@
             document.getElementById('content-id').value = item.id;
             document.getElementById('content-title').value = item.title;
             document.getElementById('content-description').value = item.description || '';
+
+            // Convert array of URLs to textarea format (one per line)
             const urlsText = Array.isArray(item.resource_urls) ? item.resource_urls.join('\n') : '';
             document.getElementById('content-urls').value = urlsText;
+
             document.getElementById('cancel-content-btn').style.display = 'inline-block';
+            // Scroll to the form
             document.getElementById('content-form').scrollIntoView();
         }
 
@@ -547,7 +570,7 @@
             }
 
             try {
-                const response = await fetch(BACKEND_API_URL + '/content/' + contentId, {
+                const response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, {
                     method: 'DELETE'
                 });
 
@@ -568,7 +591,7 @@
         // Load user's schedules
         async function loadUserSchedules() {
             try {
-                const response = await fetch(BACKEND_API_URL + '/schedules');
+                const response = await apiRequest(`${BACKEND_API_URL}/schedules`);
                 const result = await response.json();
 
                 if (!result.success) {
@@ -587,39 +610,56 @@
 
                 let html = '<div>';
                 result.schedules.forEach(schedule => {
-                    let scheduleDescription = 'Workflow: ' + schedule.workflow_id;
+                    // Try to parse cron expression for user-friendly display
+                    let scheduleDescription = `Workflow: ${escapeHtml(schedule.workflow_id)}`;
+
                     try {
                         const cronParts = schedule.cron_expression.split(' ');
                         if (cronParts.length >= 5) {
                             const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
+
                             if (minute === '0' && hour === '0' && dayOfMonth !== '*' && month === '*' && dayOfWeek === '*') {
-                                scheduleDescription += '<br>Runs monthly on day ' + dayOfMonth + ' at 12:00 AM';
+                                scheduleDescription += `<br>Runs monthly on day ${dayOfMonth} at 12:00 AM`;
                             } else if (minute === '0' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
-                                scheduleDescription += '<br>Runs daily at ' + hour + ':00';
+                                scheduleDescription += `<br>Runs daily at ${hour}:00`;
                             } else if (minute !== '*' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') {
                                 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                                const dayNames = dayOfWeek.split(',').map(d => days[parseInt(d)] || 'day ' + d).join(', ');
-                                scheduleDescription += '<br>Runs weekly on ' + dayNames + ' at ' + hour + ':' + minute;
+                                const dayNames = dayOfWeek.split(',').map(d => days[parseInt(d)] || `day ${d}`).join(', ');
+                                scheduleDescription += `<br>Runs weekly on ${dayNames} at ${hour}:${minute}`;
                             } else {
-                                scheduleDescription += '<br>Cron: ' + schedule.cron_expression;
+                                scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
                             }
                         } else {
-                            scheduleDescription += '<br>Cron: ' + schedule.cron_expression;
+                            scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
                         }
                     } catch (e) {
-                        scheduleDescription += '<br>Cron: ' + schedule.cron_expression;
+                        scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
                     }
 
+                    // Add content information if available
                     if (schedule.content_items) {
-                        scheduleDescription += '<br>Content: ' + schedule.content_items.title;
+                        scheduleDescription += `<br>Content: ${escapeHtml(schedule.content_items.title)}`;
                     }
 
                     // Add next execution time if available
+                    let nextExecHtml = '';
                     if (schedule.next_execution) {
-                        scheduleDescription += '<br><strong style="color: #4CAF50;">Next execution: ' + schedule.next_execution + '</strong>';
+                        nextExecHtml = `<br><strong style="color: #4CAF50;">Next execution: ${schedule.next_execution}</strong>`;
+                        scheduleDescription += nextExecHtml;
                     }
 
-                    html += '<div class="schedule-item"><div><strong>' + (schedule.name || 'Unnamed Schedule') + '</strong><br><small>' + scheduleDescription + '</small></div><div><button onclick="editSchedule(\'' + schedule.id + '\')">Edit</button><button class="delete-btn" onclick="deleteSchedule(\'' + schedule.id + '\')">Delete</button></div></div>';
+                    html += `
+                        <div class="schedule-item">
+                            <div>
+                                <strong>${escapeHtml(schedule.name || 'Unnamed Schedule')}</strong><br>
+                                <small>${scheduleDescription}</small>
+                            </div>
+                            <div>
+                                <button onclick="editSchedule('${schedule.id}')">Edit</button>
+                                <button class="delete-btn" onclick="deleteSchedule('${schedule.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
                 });
                 html += '</div>';
 
@@ -639,9 +679,9 @@
                 const name = document.getElementById('schedule-name').value;
                 const scheduleType = document.getElementById('schedule-type').value;
 
+                // Get schedule data based on type
                 let scheduleData = {};
                 let cronExpression = '';
-                let isoDatetime = null;
 
                 switch (scheduleType) {
                     case 'one-time':
@@ -650,16 +690,25 @@
                             showMessage('Please select a date and time', 'error');
                             return;
                         }
+
+                        // Validate that the datetime is in the future
                         const selectedDatetime = new Date(datetimeInput);
                         const now = new Date();
                         if (selectedDatetime <= now) {
                             showMessage('Please select a future date and time', 'error');
                             return;
                         }
+
                         scheduleData.datetime = datetimeInput;
-                        cronExpression = selectedDatetime.getMinutes() + ' ' + selectedDatetime.getHours() + ' ' + selectedDatetime.getDate() + ' ' + (selectedDatetime.getMonth() + 1) + ' *';
-                        isoDatetime = selectedDatetime.toISOString();
+                        // Convert datetime to standard cron expression for daily execution
+                        // We'll handle the one-time aspect in the backend by storing additional metadata
+                        cronExpression = `${selectedDatetime.getMinutes()} ${selectedDatetime.getHours()} ${selectedDatetime.getDate()} ${selectedDatetime.getMonth() + 1} *`;
+
+                        // Send the datetime in a format that preserves local time intention
+                        // We'll send the ISO string but the backend will interpret it as local time
+                        var isoDatetime = selectedDatetime.toISOString();
                         break;
+
                     case 'daily':
                         const dailyTime = document.getElementById('schedule-time').value;
                         if (!dailyTime) {
@@ -668,25 +717,31 @@
                         }
                         scheduleData.time = dailyTime;
                         const dailyTimeParts = dailyTime.split(':');
-                        cronExpression = dailyTimeParts[1] + ' ' + dailyTimeParts[0] + ' * * *';
+                        cronExpression = `${dailyTimeParts[1]} ${dailyTimeParts[0]} * * *`;
                         break;
+
                     case 'weekly':
                         const weeklyTime = document.getElementById('schedule-time').value;
                         if (!weeklyTime) {
                             showMessage('Please select a time', 'error');
                             return;
                         }
+
+                        // Get selected days
                         const dayCheckboxes = document.querySelectorAll('#weekly-options input[type="checkbox"]:checked');
                         if (dayCheckboxes.length === 0) {
                             showMessage('Please select at least one day', 'error');
                             return;
                         }
+
                         const days = Array.from(dayCheckboxes).map(cb => cb.value).join(',');
                         scheduleData.time = weeklyTime;
                         scheduleData.days = days.split(',');
+
                         const weeklyTimeParts = weeklyTime.split(':');
-                        cronExpression = weeklyTimeParts[1] + ' ' + weeklyTimeParts[0] + ' * * ' + days;
+                        cronExpression = `${weeklyTimeParts[1]} ${weeklyTimeParts[0]} * * ${days}`;
                         break;
+
                     case 'monthly':
                         const monthlyTime = document.getElementById('schedule-time').value;
                         const monthDay = document.getElementById('month-day').value;
@@ -698,11 +753,14 @@
                             showMessage('Please enter a valid day of month (1-31)', 'error');
                             return;
                         }
+
                         scheduleData.time = monthlyTime;
                         scheduleData.day = monthDay;
+
                         const monthlyTimeParts = monthlyTime.split(':');
-                        cronExpression = monthlyTimeParts[1] + ' ' + monthlyTimeParts[0] + ' ' + monthDay + ' * *';
+                        cronExpression = `${monthlyTimeParts[1]} ${monthlyTimeParts[0]} ${monthDay} * *`;
                         break;
+
                     case 'custom':
                         cronExpression = document.getElementById('cron-expression').value;
                         if (!cronExpression) {
@@ -710,6 +768,7 @@
                             return;
                         }
                         break;
+
                     default:
                         showMessage('Please select a schedule type', 'error');
                         return;
@@ -725,12 +784,13 @@
                     throw new Error('User not authenticated');
                 }
 
+                // Get selected content item
                 const contentItemId = document.getElementById('content-selector').value;
 
                 const scheduleDataToSend = {
                     workflow_id: workflowId,
                     cron_expression: cronExpression,
-                    name: name || 'Schedule for ' + workflowId,
+                    name: name || `Schedule for ${workflowId}`,
                     user_id: user.id,
                     is_one_time: scheduleType === 'one-time',
                     one_time_date: scheduleType === 'one-time' ? isoDatetime : null,
@@ -739,15 +799,15 @@
 
                 let response;
                 if (scheduleId) {
-                    response = await fetch(BACKEND_API_URL + '/schedules/' + scheduleId, {
+                    // Update existing schedule
+                    response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(scheduleDataToSend)
                     });
                 } else {
-                    response = await fetch(BACKEND_API_URL + '/schedules', {
+                    // Create new schedule
+                    response = await apiRequest(`${BACKEND_API_URL}/schedules`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(scheduleDataToSend)
                     });
                 }
@@ -758,11 +818,18 @@
                     throw new Error(result.error || 'Failed to save schedule');
                 }
 
+                // Show success message
                 showMessage(scheduleId ? 'Schedule updated successfully!' : 'Schedule created successfully!', 'success');
+
+                // Reset form
                 document.getElementById('schedule-form').reset();
                 document.getElementById('schedule-id').value = '';
                 document.getElementById('cancel-btn').style.display = 'none';
+
+                // Reset form visibility
                 updateScheduleForm();
+
+                // Reload schedules
                 await loadUserSchedules();
             } catch (error) {
                 console.error('Error saving schedule:', error);
@@ -782,14 +849,21 @@
             document.getElementById('schedule-id').value = schedule.id;
             document.getElementById('workflow-selector').value = schedule.workflow_id;
             document.getElementById('schedule-name').value = schedule.name || '';
+
+            // Set content item if available
             if (schedule.content_item_id) {
                 document.getElementById('content-selector').value = schedule.content_item_id;
             } else {
                 document.getElementById('content-selector').value = '';
             }
+
+            // For editing, default to custom cron expression
             document.getElementById('schedule-type').value = 'custom';
             document.getElementById('cron-expression').value = schedule.cron_expression;
+
+            // Show custom cron form
             updateScheduleForm();
+
             document.getElementById('cancel-btn').style.display = 'inline-block';
         }
 
@@ -798,19 +872,28 @@
             document.getElementById('schedule-form').reset();
             document.getElementById('schedule-id').value = '';
             document.getElementById('cancel-btn').style.display = 'none';
+
+            // Reset form visibility
             updateScheduleForm();
-            document.querySelectorAll('#weekly-options input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+            // Clear checkboxes
+            document.querySelectorAll('#weekly-options input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
         }
 
         // Update schedule form visibility based on selected type
         function updateScheduleForm() {
             const scheduleType = document.getElementById('schedule-type').value;
+
+            // Hide all schedule options first
             document.getElementById('one-time-schedule').style.display = 'none';
             document.getElementById('recurring-options').style.display = 'none';
             document.getElementById('custom-cron').style.display = 'none';
             document.getElementById('weekly-options').style.display = 'none';
             document.getElementById('monthly-options').style.display = 'none';
 
+            // Show relevant options based on schedule type
             switch(scheduleType) {
                 case 'one-time':
                     document.getElementById('one-time-schedule').style.display = 'block';
@@ -839,7 +922,7 @@
             }
 
             try {
-                const response = await fetch(BACKEND_API_URL + '/schedules/' + scheduleId, {
+                const response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
                     method: 'DELETE'
                 });
 
@@ -860,7 +943,9 @@
         // Show message to user
         function showMessage(text, type, elementId = 'message') {
             const messageElement = document.getElementById(elementId);
-            messageElement.innerHTML = '<div class="message ' + type + '">' + text + '</div>';
+            messageElement.innerHTML = `<div class="message ${type}">${text}</div>`;
+
+            // Clear message after 5 seconds
             setTimeout(() => {
                 messageElement.innerHTML = '';
             }, 5000);

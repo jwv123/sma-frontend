@@ -137,21 +137,14 @@ async function triggerWorkflow(workflowId) {
             return { success: false, message: 'Workflow ID is required (after sanitization)' };
         }
 
-        // Construct the n8n webhook URL
-        const n8nWebhookUrl = `${process.env.WEBHOOK_URL || 'https://ef0ps4gk.rcsrv.net/webhook/'}/${encodeURIComponent(sanitizedWorkflowId)}`;
+        // Construct the n8n webhook URL (production)
+        const n8nWebhookUrl = `https://ef0ps4gk.rcsrv.net/webhook/${encodeURIComponent(sanitizedWorkflowId)}`;
 
-        console.log(`Triggering workflow with URL: ${n8nWebhookUrl}`);
-        console.log(`Original workflow ID: "${workflowId}", Sanitized: "${sanitizedWorkflowId}"`);
-
-        // Test if we can even make the request
-        console.log('Attempting to trigger workflow...');
+        console.log(`Triggering workflow with ID: ${sanitizedWorkflowId}`);
 
         // Make the actual API call to trigger the workflow with timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-        // Add more detailed logging
-        console.log('About to make fetch request...');
 
         const response = await fetch(n8nWebhookUrl, {
             method: 'POST',
@@ -169,19 +162,11 @@ async function triggerWorkflow(workflowId) {
 
         clearTimeout(timeoutId);
 
-        console.log('Fetch request completed');
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        console.log('Response headers:', [...response.headers.entries()]);
-
         // Try to get response text regardless of status
         const responseText = await response.text();
-        console.log('Response text:', responseText);
 
         // Check if the request was successful
         if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
-            console.error('Response text:', responseText);
             return {
                 success: false,
                 message: `Server error: ${response.status} - ${response.statusText}`,
@@ -194,16 +179,13 @@ async function triggerWorkflow(workflowId) {
         if (responseText) {
             try {
                 result = JSON.parse(responseText);
-                console.log('Parsed JSON response:', result);
             } catch (parseError) {
-                console.warn('Could not parse response as JSON, using raw text');
                 result = { message: 'Workflow triggered successfully', rawResponse: responseText };
             }
         } else {
             result = { message: 'Workflow triggered successfully (empty response)' };
         }
 
-        console.log('Returning success result');
         return {
             success: true,
             message: `Workflow ${sanitizedWorkflowId} triggered successfully!`,
@@ -211,7 +193,6 @@ async function triggerWorkflow(workflowId) {
         };
     } catch (error) {
         console.error('Error triggering workflow:', error);
-        console.error('Error stack:', error.stack);
 
         // Handle different types of errors with more specificity
         if (error.name === 'AbortError') {
@@ -221,11 +202,34 @@ async function triggerWorkflow(workflowId) {
         } else if (error.message.includes('CORS')) {
             return { success: false, message: 'CORS error. The server is not allowing requests from this domain.', errorDetails: error.toString() };
         } else {
-            // Provide more detailed error information
             const errorMessage = error.message || 'Unknown error occurred';
             return { success: false, message: `Error: ${errorMessage}`, errorDetails: error.toString() };
         }
     }
+}
+
+// Helper: make authenticated API requests to the backend
+async function apiRequest(url, options = {}) {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.access_token}`,
+    ...options.headers
+  };
+
+  return fetch(url, { ...options, headers });
+}
+
+// Helper: escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (text == null) return '';
+  const div = document.createElement('div');
+  div.textContent = String(text);
+  return div.innerHTML;
 }
 
 // Expose the function globally with a check to avoid conflicts
@@ -252,8 +256,6 @@ if (typeof window.triggerWorkflow !== 'function') {
     console.log('triggerWorkflow function exposed globally with recursion protection');
 } else {
     console.warn('triggerWorkflow function already exists, not overwriting');
-    // Log the existing function for debugging
-    console.log('Existing triggerWorkflow function:', window.triggerWorkflow);
 }
 
 // Test function to check if everything is working
@@ -322,7 +324,7 @@ window.testNetworkConnectivity = async function testNetworkConnectivity() {
 window.testWorkflowUrl = async function testWorkflowUrl(workflowId = 'test') {
     console.log('Testing workflow URL with ID:', workflowId);
     try {
-        const url = `${process.env.WEBHOOK_URL || 'https://ef0ps4gk.rcsrv.net/webhook/'}/${workflowId}`;
+        const url = `https://ef0ps4gk.rcsrv.net/webhook/${workflowId}`;
         console.log('Testing URL:', url);
 
         // Test if the URL is accessible
@@ -339,7 +341,6 @@ window.testWorkflowUrl = async function testWorkflowUrl(workflowId = 'test') {
 
         console.log('Workflow URL test response:', response.status, response.statusText);
         const text = await response.text();
-        console.log('Response text:', text);
 
         return {
             success: response.ok,
