@@ -275,6 +275,10 @@
     <script>
         // Backend API URL is defined in supabase.js as BACKEND_API_URL
 
+        // Store loaded data for edit lookups (avoids inline string escaping issues)
+        let contentItemsData = [];
+        let schedulesData = [];
+
         // Check if user is logged in
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -427,9 +431,12 @@
                     return;
                 }
 
+                // Store for edit lookups
+                contentItemsData = result.content;
+
                 let html = '<div>';
                 result.content.forEach(item => {
-                    html += '<div class="schedule-item"><div><strong>' + item.title + '</strong><br><small>' + (item.description || 'No description') + '</small><br><small>Images: ' + (item.resource_urls ? item.resource_urls.length : 0) + '</small></div><div><button onclick="editContentItem(' + item.id + ', \'' + item.title + '\', \'' + (item.description || '') + '\', ' + JSON.stringify(item.resource_urls || []) + ')">Edit</button><button class="delete-btn" onclick="deleteContentItem(' + item.id + ')">Delete</button></div></div>';
+                    html += '<div class="schedule-item"><div><strong>' + item.title + '</strong><br><small>' + (item.description || 'No description') + '</small><br><small>Images: ' + (item.resource_urls ? item.resource_urls.length : 0) + '</small></div><div><button onclick="editContentItem(' + item.id + ')">Edit</button><button class="delete-btn" onclick="deleteContentItem(' + item.id + ')">Delete</button></div></div>';
                 });
                 html += '</div>';
 
@@ -509,11 +516,18 @@
         }
 
         // Edit a content item
-        function editContentItem(id, title, description, resourceUrls) {
-            document.getElementById('content-id').value = id;
-            document.getElementById('content-title').value = title;
-            document.getElementById('content-description').value = description;
-            const urlsText = Array.isArray(resourceUrls) ? resourceUrls.join('\n') : '';
+        function editContentItem(id) {
+            const item = contentItemsData.find(i => String(i.id) === String(id));
+            if (!item) {
+                console.error('Content item not found:', id, 'Available:', contentItemsData.map(i => i.id));
+                showMessage('Could not find content item data. Try refreshing the page.', 'error', 'message-content');
+                return;
+            }
+
+            document.getElementById('content-id').value = item.id;
+            document.getElementById('content-title').value = item.title;
+            document.getElementById('content-description').value = item.description || '';
+            const urlsText = Array.isArray(item.resource_urls) ? item.resource_urls.join('\n') : '';
             document.getElementById('content-urls').value = urlsText;
             document.getElementById('cancel-content-btn').style.display = 'inline-block';
             document.getElementById('content-form').scrollIntoView();
@@ -568,6 +582,9 @@
                     return;
                 }
 
+                // Store for edit lookups
+                schedulesData = result.schedules;
+
                 let html = '<div>';
                 result.schedules.forEach(schedule => {
                     let scheduleDescription = 'Workflow: ' + schedule.workflow_id;
@@ -602,7 +619,7 @@
                         scheduleDescription += '<br><strong style="color: #4CAF50;">Next execution: ' + schedule.next_execution + '</strong>';
                     }
 
-                    html += '<div class="schedule-item"><div><strong>' + (schedule.name || 'Unnamed Schedule') + '</strong><br><small>' + scheduleDescription + '</small></div><div><button onclick="editSchedule(\'' + schedule.id + '\', \'' + schedule.workflow_id + '\', \'' + schedule.cron_expression + '\', \'' + (schedule.name || '') + '\', ' + (schedule.content_item_id || 'null') + ')">Edit</button><button class="delete-btn" onclick="deleteSchedule(\'' + schedule.id + '\')">Delete</button></div></div>';
+                    html += '<div class="schedule-item"><div><strong>' + (schedule.name || 'Unnamed Schedule') + '</strong><br><small>' + scheduleDescription + '</small></div><div><button onclick="editSchedule(\'' + schedule.id + '\')">Edit</button><button class="delete-btn" onclick="deleteSchedule(\'' + schedule.id + '\')">Delete</button></div></div>';
                 });
                 html += '</div>';
 
@@ -754,17 +771,24 @@
         }
 
         // Edit a schedule
-        function editSchedule(id, workflowId, cronExpression, name, contentItemId) {
-            document.getElementById('schedule-id').value = id;
-            document.getElementById('workflow-selector').value = workflowId;
-            document.getElementById('schedule-name').value = name;
-            if (contentItemId) {
-                document.getElementById('content-selector').value = contentItemId;
+        function editSchedule(id) {
+            const schedule = schedulesData.find(s => String(s.id) === String(id));
+            if (!schedule) {
+                console.error('Schedule not found:', id, 'Available:', schedulesData.map(s => s.id));
+                showMessage('Could not find schedule data. Try refreshing the page.', 'error');
+                return;
+            }
+
+            document.getElementById('schedule-id').value = schedule.id;
+            document.getElementById('workflow-selector').value = schedule.workflow_id;
+            document.getElementById('schedule-name').value = schedule.name || '';
+            if (schedule.content_item_id) {
+                document.getElementById('content-selector').value = schedule.content_item_id;
             } else {
                 document.getElementById('content-selector').value = '';
             }
             document.getElementById('schedule-type').value = 'custom';
-            document.getElementById('cron-expression').value = cronExpression;
+            document.getElementById('cron-expression').value = schedule.cron_expression;
             updateScheduleForm();
             document.getElementById('cancel-btn').style.display = 'inline-block';
         }
