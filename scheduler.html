@@ -361,13 +361,11 @@
 
         // Load user's workflows and content items
         async function loadUserWorkflows() {
-            try {
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) {
-                    throw new Error('User not authenticated');
-                }
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) return;
 
-                // Load workflows
+            // Load workflows from Supabase directly (independent of backend API)
+            try {
                 const { data: workflowData, error: workflowError } = await _supabase
                     .from('user_workflows')
                     .select('*')
@@ -389,8 +387,13 @@
                         workflowSelector.appendChild(option);
                     });
                 }
+            } catch (error) {
+                console.error('Error loading workflows:', error);
+                document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>';
+            }
 
-                // Load content items for dropdown
+            // Load content items for dropdown (independent of Supabase query above)
+            try {
                 const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
 
@@ -408,10 +411,8 @@
                     }
                 }
             } catch (error) {
-                console.error('Error loading workflows and content:', error);
-                document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>';
+                console.error('Error loading content for dropdown:', error);
                 document.getElementById('content-selector').innerHTML = '<option value="">Error loading content</option>';
-                showMessage('Error loading workflows and content: ' + error.message, 'error');
             }
         }
 
