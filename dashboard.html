@@ -3,148 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Social Media Automation</title>
+    <title>Dashboard — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;400;600;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy-deep: #034985;
+            --navy: #024980;
+            --blue-mid: #1280C0;
+            --blue-bright: #40A0E0;
+            --ice: #E0F0F8;
+            --ice-light: #B8E0F0;
+            --text-primary: #1A2B3D;
+            --text-secondary: #4A6078;
+            --text-muted: #8A9BB0;
+            --surface: #F5F8FB;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(3, 73, 133, 0.1);
+            --glass-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(3, 73, 133, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #001f3f, #808080);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
         }
 
-        input, textarea {
-            color: black;
-        }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; }
 
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .header {
+        /* Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 2rem;
+            justify-content: space-between;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px) saturate(1.2);
+            -webkit-backdrop-filter: blur(16px) saturate(1.2);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 1px 4px rgba(3, 73, 133, 0.04);
         }
 
-        .welcome-section {
-            background: rgba(0, 0, 0, 0.3);
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .navbar-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 2px 8px rgba(3, 73, 133, 0.08);
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .navbar-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+        .navbar-name {
+            font-family: 'Sora', sans-serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--navy-deep);
+        }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 110;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--navy-deep);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; }
+        .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        .navbar-center {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            color: var(--navy-deep);
+            background: rgba(3, 73, 133, 0.05);
+        }
+
+        .nav-link.active {
+            color: var(--blue-mid);
+            background: rgba(18, 128, 192, 0.08);
+        }
+
+        .btn-signout {
+            padding: 0.5rem 1.25rem;
+            border-radius: 10px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            background: rgba(220, 53, 69, 0.06);
+            color: #A82030;
+            transition: all 0.2s;
+        }
+
+        .btn-signout:hover {
+            background: rgba(220, 53, 69, 0.12);
+            color: #881828;
+        }
+
+        /* Main content */
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Glass card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(1.3);
+            -webkit-backdrop-filter: blur(20px) saturate(1.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
             padding: 2rem;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-            text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--glass-shadow);
         }
 
-        .card {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1.5rem;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(3, 73, 133, 0.15), transparent);
+        }
+
+        .welcome-text {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--navy-deep);
+        }
+
+        .welcome-sub {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
             margin-bottom: 1rem;
+            color: var(--navy-deep);
         }
 
-        .card-grid {
+        /* Action cards grid */
+        .action-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1rem;
         }
 
-        .card button {
-            text-decoration: underline;
-        }
-
-        button {
-            padding: 0.5rem 1rem;
-            background: #001f3f;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        .action-card {
+            background: #FFFFFF;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
-        button:hover {
-            background: #002d50;
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(3, 73, 133, 0.08);
+            border-color: rgba(18, 128, 192, 0.25);
         }
 
-        .logout-btn {
-            background: #dc3545;
+        .action-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--navy-deep);
         }
 
-        .logout-btn:hover {
-            background: #c82333;
+        .action-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .action-card .card-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--blue-mid);
+            transition: color 0.2s;
+        }
+
+        .action-card:hover .card-action { color: var(--navy-deep); }
+
+        /* Workflow items */
+        .workflow-item {
+            background: #FFFFFF;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .workflow-item:hover {
+            border-color: rgba(18, 128, 192, 0.2);
+            box-shadow: 0 2px 8px rgba(3, 73, 133, 0.05);
+        }
+
+        .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-trigger {
+            background: linear-gradient(135deg, #1280C0, #40A0E0);
+            color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(18, 128, 192, 0.2);
+        }
+
+        .btn-trigger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(18, 128, 192, 0.3);
+        }
+
+        .btn-trigger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0.75rem 1rem; }
+            .nav-toggle { display: flex; }
+            .navbar-logo { width: 44px; height: 44px; border-radius: 10px; }
+            .navbar-name { font-size: 1.15rem; }
+            .navbar-center {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: rgba(255, 255, 255, 0.97);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid var(--glass-border);
+                box-shadow: 0 8px 24px rgba(3, 73, 133, 0.08);
+                padding: 1rem;
+                gap: 0.25rem;
+            }
+            .navbar-center.open { display: flex; }
+            .nav-link { padding: 0.75rem 1rem; border-radius: 10px; }
+            .btn-signout { margin-top: 0.5rem; width: 100%; text-align: center; justify-content: center; }
+            .main-content { padding: 1rem; }
+            .action-grid { grid-template-columns: 1fr; }
+            .workflow-item { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+            .workflow-item > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-logo { width: 40px; height: 40px; border-radius: 8px; }
+            .navbar-name { font-size: 1.05rem; }
+            .main-content { padding: 0.75rem; }
+            .glass-card { padding: 1.25rem; }
+            .welcome-text { font-size: 1.25rem; }
+            .action-card { padding: 1.25rem; }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>Social Media Automation</h1>
-            <button id="logout-btn" class="logout-btn">Logout</button>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="dashboard.html" class="navbar-brand">
+            <div class="navbar-logo">
+                <img src="../brand-assets/logo.jpg" alt="ShareShift">
+            </div>
+            <span class="navbar-name">ShareShift</span>
+        </a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="navbar-center" id="navbar-center">
+            <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="workflows.html" class="nav-link">Workflows</a>
+            <a href="scheduler.html" class="nav-link">Scheduler</a>
+            <a href="content.html" class="nav-link">Content</a>
+            <a href="logs.html" class="nav-link">Logs</a>
+            <button id="logout-btn" class="btn-signout">Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="glass-card">
+            <div class="welcome-text">Welcome back, <span id="company-name">Company</span></div>
+            <p class="welcome-sub">Manage your social media automation workflows and schedules.</p>
         </div>
 
-        <div class="welcome-section">
-            <h2>Welcome back, <span id="company-name">Company</span>!</h2>
-            <p>Manage your social media accounts and automate your posts from this dashboard.</p>
-        </div>
-
-        <div class="card-grid">
-            <!-- <div class="card">
-                <h3>Scheduled Posts</h3>
-                <p>View and manage your scheduled social media posts.</p>
-                <button>View Posts</button>
-            </div>
-            <div class="card">
-                <h3>Analytics</h3>
-                <p>Check the performance of your social media campaigns.</p>
-                <button>View Analytics</button>
-            </div>
-            <div class="card">
-                <h3>Content Calendar</h3>
-                <p>Plan and organize your content strategy.</p>
-                <button>Open Calendar</button>
-            </div> -->
-            <div class="card">
+        <div class="action-grid">
+            <div class="action-card" onclick="window.location.href='workflows.html'">
                 <h3>Workflow Management</h3>
-                <p>Manage and trigger your n8n workflows.</p>
-                <button onclick="window.location.href='workflows.html'">Manage Workflows</button>
+                <p>Add, trigger, and manage your n8n workflow integrations.</p>
+                <span class="card-action">Manage Workflows &rarr;</span>
             </div>
-            <div class="card">
+            <div class="action-card" onclick="window.location.href='scheduler.html'">
                 <h3>Schedule Automation</h3>
-                <p>Set up automated workflow triggers.</p>
-                <button onclick="window.location.href='scheduler.html'">Manage Schedules</button>
+                <p>Set up recurring and one-time automated workflow triggers.</p>
+                <span class="card-action">Manage Schedules &rarr;</span>
             </div>
         </div>
 
-        <div class="card">
-            <h3>Your Workflows</h3>
+        <div class="glass-card" style="margin-top: 2rem;">
+            <div class="card-title">Your Workflows</div>
             <div id="user-workflows">
-                <p>Loading your workflows...</p>
+                <p style="color: var(--text-muted);">Loading your workflows...</p>
             </div>
         </div>
     </div>
 
     <script src="supabase.js"></script>
     <script>
-        // Check if user is logged in
         document.addEventListener('DOMContentLoaded', async function() {
             const { data: { user } } = await _supabase.auth.getUser();
-
             if (!user) {
-                // Redirect to login if not logged in
                 window.location.href = 'login.html';
                 return;
             }
 
-            // Get user profile to display company name
             const { data: profile, error } = await _supabase
                 .from('profiles')
                 .select('company')
@@ -158,133 +402,86 @@
                 document.getElementById('company-name').textContent = profile.company;
             }
 
-            // Load user workflows
             loadUserWorkflows();
 
-            // Logout functionality
             document.getElementById('logout-btn').addEventListener('click', async function() {
                 const { error } = await _supabase.auth.signOut();
-                if (error) {
-                    console.error('Error logging out:', error);
-                }
+                if (error) console.error('Error logging out:', error);
                 window.location.href = 'index.html';
+            });
+
+            const navToggle = document.getElementById('nav-toggle');
+            const navbarCenter = document.getElementById('navbar-center');
+            navToggle.addEventListener('click', () => {
+                navToggle.classList.toggle('open');
+                navbarCenter.classList.toggle('open');
+            });
+            navbarCenter.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    navToggle.classList.remove('open');
+                    navbarCenter.classList.remove('open');
+                });
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.navbar')) {
+                    navToggle.classList.remove('open');
+                    navbarCenter.classList.remove('open');
+                }
             });
         });
 
-        // Load and display user workflows
         async function loadUserWorkflows() {
             try {
                 const { data: { user } } = await _supabase.auth.getUser();
-
                 const { data, error } = await _supabase
                     .from('user_workflows')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false })
-                    .limit(5); // Limit to 5 most recent workflows
+                    .limit(5);
 
                 if (error) throw error;
 
                 const workflowsElement = document.getElementById('user-workflows');
 
                 if (data.length === 0) {
-                    workflowsElement.innerHTML = '<p>You haven\'t saved any workflows yet. <a href="workflows.html">Add your first workflow</a>.</p>';
+                    workflowsElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any workflows yet. <a href="workflows.html" style="color: var(--blue-mid);">Add your first workflow</a>.</p>';
                     return;
                 }
 
-                let html = '<div>';
+                let html = '';
                 data.forEach(workflow => {
                     html += `
-                        <div class="workflow-item" style="background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
-                            <div>
-                                <strong>${escapeHtml(workflow.name)}</strong>
-                            </div>
-                            <button class="trigger-btn" onclick="triggerWorkflowButton('${escapeHtml(workflow.workflow_id)}', event)" style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Trigger</button>
+                        <div class="workflow-item">
+                            <div><strong>${escapeHtml(workflow.name)}</strong></div>
+                            <div><button class="btn-sm btn-trigger" onclick="triggerWorkflowButton('${escapeHtml(workflow.workflow_id)}', event)">Trigger</button></div>
                         </div>
                     `;
                 });
-                html += '</div>';
 
                 workflowsElement.innerHTML = html;
             } catch (error) {
                 console.error('Error loading workflows:', error);
-                document.getElementById('user-workflows').innerHTML = '<p>Error loading workflows.</p>';
+                document.getElementById('user-workflows').innerHTML = '<p style="color: var(--text-muted);">Error loading workflows.</p>';
             }
         }
 
-        // Trigger a workflow via webhook (button handler)
         async function triggerWorkflowButton(workflowId, event) {
-            // Get the button element that was clicked
             const btn = event ? event.target : (window.event ? window.event.target : null);
-
             try {
-                // Validate input
-                if (!workflowId) {
-                    alert('Error: Workflow ID is missing');
-                    if (btn) {
-                        btn.textContent = 'Trigger';
-                        btn.disabled = false;
-                    }
-                    return;
-                }
-
-                console.log('Triggering workflow with ID:', workflowId);
-
-                if (btn) {
-                    const originalText = btn.textContent;
-                    btn.textContent = 'Triggering...';
-                    btn.disabled = true;
-                }
-
-                // Check if the global triggerWorkflow function exists
-                if (typeof window.triggerWorkflow !== 'function') {
-                    throw new Error('triggerWorkflow function is not available');
-                }
-
-                // Call the global triggerWorkflow function
+                if (!workflowId) { alert('Error: Workflow ID is missing'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
+                if (btn) { btn.textContent = 'Triggering...'; btn.disabled = true; }
+                if (typeof window.triggerWorkflow !== 'function') throw new Error('triggerWorkflow function is not available');
                 const result = await window.triggerWorkflow(workflowId);
-
-                console.log('Workflow trigger result:', result);
-
-                // Check if result exists and has success property
                 if (result && typeof result.success !== 'undefined') {
-                    if (result.success) {
-                        // Show success message
-                        alert(result.message);
-                    } else {
-                        // Show error message with more details if available
-                        let errorMessage = result.message || 'Unknown error occurred';
-                        if (result.errorDetails) {
-                            errorMessage += ' (' + result.errorDetails + ')';
-                        }
-                        if (result.details) {
-                            errorMessage += ' - ' + result.details;
-                        }
-                        alert('Error triggering workflow: ' + errorMessage);
-                    }
-                } else {
-                    // Handle case where result doesn't have success property
-                    let errorMessage = result && result.message ? result.message : 'Unknown error occurred';
-                    if (result && result.errorDetails) {
-                        errorMessage += ' (' + result.errorDetails + ')';
-                    }
-                    alert('Error triggering workflow: ' + errorMessage);
-                }
-
-                // Restore button
-                if (btn) {
-                    btn.textContent = 'Trigger';
-                    btn.disabled = false;
-                }
+                    if (result.success) { alert(result.message); }
+                    else { let m = result.message || 'Unknown error'; if (result.errorDetails) m += ' (' + result.errorDetails + ')'; if (result.details) m += ' - ' + result.details; alert('Error: ' + m); }
+                } else { let m = result && result.message ? result.message : 'Unknown error'; if (result && result.errorDetails) m += ' (' + result.errorDetails + ')'; alert('Error: ' + m); }
+                if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; }
             } catch (error) {
                 console.error('Error triggering workflow:', error);
-                alert('Error triggering workflow: ' + (error.message || 'Unknown error'));
-
-                // Restore button
-                if (btn) {
-                    btn.textContent = 'Trigger';
-                    btn.disabled = false;
-                }
+                alert('Error: ' + (error.message || 'Unknown error'));
+                if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; }
             }
         }
     </script>

@@ -3,122 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Social Media Automation</title>
+    <title>Sign In — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;400;600;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy-deep: #034985;
+            --navy: #024980;
+            --blue-mid: #1280C0;
+            --blue-bright: #40A0E0;
+            --ice: #E0F0F8;
+            --ice-light: #B8E0F0;
+            --text-primary: #1A2B3D;
+            --text-secondary: #4A6078;
+            --text-muted: #8A9BB0;
+            --surface: #F5F8FB;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(3, 73, 133, 0.1);
+            --glass-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(3, 73, 133, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #001f3f, #808080);
-            height: 100vh;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
+            color: var(--text-primary);
         }
 
-        input, textarea {
-            color: black;
+        h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(1.3);
+            -webkit-backdrop-filter: blur(20px) saturate(1.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+            box-shadow: var(--glass-shadow);
         }
 
-        .login-container {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2rem;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-            width: 300px;
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(3, 73, 133, 0.15), transparent);
         }
 
-        h2 {
+        .logo-mark {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            overflow: hidden;
+            margin: 0 auto 1.75rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 16px rgba(3, 73, 133, 0.1);
+        }
+
+        .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.25rem;
+            color: var(--navy-deep);
         }
 
-        .form-group {
-            margin-bottom: 1rem;
+        .card-subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.75rem;
         }
 
-        label {
+        .form-group { margin-bottom: 1.25rem; }
+
+        .form-group label {
             display: block;
             margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.03em;
         }
 
-        input {
+        .frost-input {
             width: 100%;
-            padding: 0.5rem;
-            border-radius: 5px;
-            border: none;
-            background: rgba(255, 255, 255, 0.9);
-            color: black;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(3, 73, 133, 0.12);
+            background: #FFFFFF;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
         }
 
-        button {
+        .frost-input::placeholder { color: var(--text-muted); }
+
+        .frost-input:focus {
+            border-color: rgba(18, 128, 192, 0.5);
+            box-shadow: 0 0 0 3px rgba(18, 128, 192, 0.1);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            padding: 0.7rem;
-            background: #001f3f;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            padding: 0.8rem;
+            border-radius: 14px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
             cursor: pointer;
-            margin-top: 1rem;
-            font-size: 1rem;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #1280C0 0%, #40A0E0 100%);
+            color: #FFFFFF;
+            box-shadow: 0 4px 16px rgba(18, 128, 192, 0.25);
         }
 
-        button:hover {
-            background: #002d50;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(18, 128, 192, 0.35);
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #1A7A30;
+        }
+
+        .error {
+            background: rgba(220, 53, 69, 0.08);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #A82030;
         }
 
         .links {
             text-align: center;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
         }
 
-        a {
-            color: white;
+        .links a {
+            color: var(--navy-deep);
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
         }
 
-        a:hover {
-            text-decoration: underline;
-        }
+        .links a:hover { color: var(--blue-bright); }
 
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-
-        .success {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .error {
-            background-color: #f44336;
-            color: white;
+        @media (max-width: 480px) {
+            .glass-card { padding: 1.75rem 1.25rem; margin: 1rem; }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
+    <div class="glass-card">
+        <div class="logo-mark">
+            <img src="../brand-assets/logo.jpg" alt="ShareShift">
+        </div>
+        <h2 class="card-title">Welcome Back</h2>
+        <p class="card-subtitle">Sign in to your ShareShift account</p>
         <div id="message"></div>
         <form id="login-form">
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" class="frost-input" placeholder="you@example.com" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" class="frost-input" placeholder="Enter your password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" class="btn-primary">Sign In</button>
         </form>
         <div class="links">
-            <p>Don't have an account? <a href="register.html">Register</a></p>
-            <p><a href="index.html">Back to Home</a></p>
+            <p>Don't have an account? <a href="register.html">Create one</a></p>
+            <p style="margin-top: 0.5rem;"><a href="index.html">Back to Home</a></p>
         </div>
     </div>
 
@@ -126,22 +214,13 @@
     <script>
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
-            // Clear previous messages
             document.getElementById('message').innerHTML = '';
-
-            // Login the user
             const result = await loginUser(email, password);
-
             if (result.success) {
                 document.getElementById('message').innerHTML = '<div class="message success">Welcome back to ' + escapeHtml(result.user.company) + '!</div>';
-                // Redirect to dashboard after successful login
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 2000);
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
             } else {
                 document.getElementById('message').innerHTML = '<div class="message error">' + escapeHtml(result.message) + '</div>';
             }

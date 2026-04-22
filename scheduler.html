@@ -3,180 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scheduler - Social Media Automation</title>
+    <title>Scheduler — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;400;600;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy-deep: #034985;
+            --navy: #024980;
+            --blue-mid: #1280C0;
+            --blue-bright: #40A0E0;
+            --ice: #E0F0F8;
+            --ice-light: #B8E0F0;
+            --text-primary: #1A2B3D;
+            --text-secondary: #4A6078;
+            --text-muted: #8A9BB0;
+            --surface: #F5F8FB;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(3, 73, 133, 0.1);
+            --glass-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(3, 73, 133, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #001f3f, #808080);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
         }
 
-        body input, body textarea, body select {
-            color: black;
+        h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; }
+        body input, body textarea, body select { color: var(--text-primary); }
+
+        /* Navbar */
+        .navbar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px) saturate(1.2);
+            -webkit-backdrop-filter: blur(16px) saturate(1.2);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 1px 4px rgba(3, 73, 133, 0.04);
         }
 
-        .scheduler-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+        .navbar-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+
+        .navbar-logo {
+            width: 60px; height: 60px; border-radius: 14px; overflow: hidden;
+            border: 1px solid var(--glass-border); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.08); flex-shrink: 0;
+            transition: all 0.3s;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 2rem;
+        .navbar-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .navbar-name { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--navy-deep); }
+
+        .nav-toggle {
+            display: none; flex-direction: column; gap: 5px;
+            background: none; border: none; cursor: pointer; padding: 0.5rem; z-index: 110;
         }
 
-        .card {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2rem;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-            margin-bottom: 2rem;
+        .nav-toggle span {
+            display: block; width: 24px; height: 2px;
+            background: var(--navy-deep); border-radius: 2px; transition: all 0.3s;
         }
 
-        .form-group {
-            margin-bottom: 1rem;
+        .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; }
+        .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        .navbar-center { display: flex; gap: 0.25rem; align-items: center; }
+
+        .nav-link {
+            color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            padding: 0.5rem 1rem; border-radius: 10px; transition: all 0.2s; white-space: nowrap;
         }
 
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
+        .nav-link:hover { color: var(--navy-deep); background: rgba(3, 73, 133, 0.05); }
+        .nav-link.active { color: var(--blue-mid); background: rgba(18, 128, 192, 0.08); }
+
+        .btn-signout {
+            padding: 0.5rem 1.25rem; border-radius: 10px; font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 0.82rem; cursor: pointer;
+            border: 1px solid rgba(220, 53, 69, 0.2); background: rgba(220, 53, 69, 0.06); color: #A82030; transition: all 0.2s;
         }
 
-        input, select {
-            width: 100%;
-            padding: 0.5rem;
-            border-radius: 5px;
-            border: none;
-            background: rgba(255, 255, 255, 0.9);
-            color: black;
+        .btn-signout:hover { background: rgba(220, 53, 69, 0.12); color: #881828; }
+
+        .scheduler-container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(20px) saturate(1.3);
+            -webkit-backdrop-filter: blur(20px) saturate(1.3);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;
+            box-shadow: var(--glass-shadow);
         }
 
-        input[type="checkbox"] {
-            width: auto;
-            margin-right: 0.5rem;
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(3, 73, 133, 0.15), transparent);
         }
 
-        input[type="checkbox"] + label {
-            display: inline-block;
-            margin-right: 1rem;
-            margin-bottom: 0;
+        .card-title { font-family: 'Sora', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--navy-deep); }
+
+        .form-group { margin-bottom: 1.25rem; }
+
+        .form-group label {
+            display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 500;
+            color: var(--text-secondary); letter-spacing: 0.03em;
         }
 
-        button {
-            padding: 0.7rem 1.5rem;
-            background: #001f3f;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-right: 10px;
-            margin-top: 0.5rem;
+        .frost-input {
+            width: 100%; padding: 0.75rem 1rem; border-radius: 12px;
+            border: 1px solid rgba(3, 73, 133, 0.12); background: #FFFFFF;
+            color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+            transition: all 0.3s ease; outline: none;
         }
 
-        button:hover {
-            background: #002d50;
+        .frost-input::placeholder { color: var(--text-muted); }
+        .frost-input:focus { border-color: rgba(18, 128, 192, 0.5); box-shadow: 0 0 0 3px rgba(18, 128, 192, 0.1); }
+
+        select.frost-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%234A6078' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
         }
 
-        .delete-btn {
-            background: #dc3545;
+        select.frost-input option { background: #FFFFFF; color: var(--text-primary); }
+
+        textarea.frost-input { resize: vertical; min-height: 80px; }
+
+        input[type="checkbox"] { width: auto; margin-right: 0.5rem; accent-color: var(--blue-mid); }
+        input[type="checkbox"] + label { display: inline-block; margin-right: 1rem; margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary); }
+
+        small { color: var(--text-muted); font-size: 0.8rem; }
+
+        .btn-primary {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.65rem 1.5rem; border-radius: 12px; font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none;
+            transition: all 0.3s; margin-right: 0.5rem; margin-top: 0.5rem;
+            background: linear-gradient(135deg, #1280C0, #40A0E0); color: #FFFFFF;
+            box-shadow: 0 4px 16px rgba(18, 128, 192, 0.25);
         }
 
-        .delete-btn:hover {
-            background: #c82333;
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(18, 128, 192, 0.35); }
+
+        .btn-secondary {
+            display: inline-flex; background: #FFFFFF; border: 1px solid var(--glass-border); color: var(--navy-deep);
+            padding: 0.65rem 1.5rem; border-radius: 12px; font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; margin-right: 0.5rem; margin-top: 0.5rem;
         }
+
+        .btn-secondary:hover { background: var(--surface); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.08); }
+
+        .btn-danger {
+            display: inline-flex; padding: 0.65rem 1.5rem; border-radius: 12px;
+            font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.3s; margin-right: 0.5rem;
+            border: 1px solid rgba(220, 53, 69, 0.2); background: rgba(220, 53, 69, 0.06); color: #A82030;
+        }
+
+        .btn-danger:hover { background: rgba(220, 53, 69, 0.12); }
+
+        .btn-edit {
+            display: inline-flex; padding: 0.65rem 1.5rem; border-radius: 12px;
+            font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.3s; margin-right: 0.5rem;
+            border: 1px solid rgba(18, 128, 192, 0.2); background: rgba(18, 128, 192, 0.06); color: var(--blue-mid);
+        }
+
+        .btn-edit:hover { background: rgba(18, 128, 192, 0.12); }
 
         .schedule-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #FFFFFF; border: 1px solid var(--glass-border); border-radius: 14px;
+            padding: 1.25rem; margin-bottom: 0.75rem;
+            display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;
         }
 
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-
-        .success {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .error {
-            background-color: #f44336;
-            color: white;
-        }
-
-        .back-link {
-            color: white;
-            text-decoration: none;
-            margin-top: 1rem;
-            display: inline-block;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
+        .schedule-item:hover { border-color: rgba(18, 128, 192, 0.2); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.05); }
 
         .cron-help {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 5px;
-            margin-top: 1rem;
-            font-size: 0.9rem;
+            background: rgba(3, 73, 133, 0.03); border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 1rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+        }
+
+        .cron-help strong { color: var(--navy-deep); }
+
+        .message { padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 12px; font-size: 0.9rem; }
+        .success { background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.2); color: #1A7A30; }
+        .error { background: rgba(220, 53, 69, 0.08); border: 1px solid rgba(220, 53, 69, 0.2); color: #A82030; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0.75rem 1rem; }
+            .nav-toggle { display: flex; }
+            .navbar-logo { width: 44px; height: 44px; border-radius: 10px; }
+            .navbar-name { font-size: 1.15rem; }
+            .navbar-center {
+                display: none; position: absolute; top: 100%; left: 0; right: 0;
+                flex-direction: column; background: rgba(255, 255, 255, 0.97);
+                backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid var(--glass-border);
+                box-shadow: 0 8px 24px rgba(3, 73, 133, 0.08);
+                padding: 1rem; gap: 0.25rem;
+            }
+            .navbar-center.open { display: flex; }
+            .nav-link { padding: 0.75rem 1rem; border-radius: 10px; }
+            .btn-signout { margin-top: 0.5rem; width: 100%; text-align: center; justify-content: center; }
+            .scheduler-container { padding: 1rem; }
+            .glass-card { padding: 1.5rem; }
+            .schedule-item { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+            .schedule-item > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-logo { width: 40px; height: 40px; border-radius: 8px; }
+            .navbar-name { font-size: 1.05rem; }
+            .scheduler-container { padding: 0.75rem; }
+            .glass-card { padding: 1.25rem; }
         }
     </style>
 </head>
 <body>
-    <div class="scheduler-container">
-        <div class="header">
-            <h1>Social Media Automation</h1>
-            <div class="nav-links" style="display: flex; gap: 1rem;">
-                <a href="dashboard.html" class="back-link">&larr; Dashboard</a>
-                <a href="logs.html" class="back-link">View Logs</a>
-            </div>
+    <nav class="navbar">
+        <a href="dashboard.html" class="navbar-brand">
+            <div class="navbar-logo"><img src="../brand-assets/logo.jpg" alt="ShareShift"></div>
+            <span class="navbar-name">ShareShift</span>
+        </a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="navbar-center" id="navbar-center">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="workflows.html" class="nav-link">Workflows</a>
+            <a href="scheduler.html" class="nav-link active">Scheduler</a>
+            <a href="content.html" class="nav-link">Content</a>
+            <a href="logs.html" class="nav-link">Logs</a>
+            <button id="logout-btn" class="btn-signout">Sign Out</button>
         </div>
+    </nav>
 
-        <div class="card">
-            <h2>Schedule Automation</h2>
+    <div class="scheduler-container">
+        <div class="glass-card">
+            <div class="card-title">Schedule Automation</div>
             <div id="message"></div>
-
             <form id="schedule-form">
                 <input type="hidden" id="schedule-id">
                 <div class="form-group">
-                    <label for="workflow-selector">Select Workflow:</label>
-                    <select id="workflow-selector" required>
+                    <label for="workflow-selector">Select Workflow</label>
+                    <select id="workflow-selector" class="frost-input" required>
                         <option value="">Loading workflows...</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="content-selector">Select Content (Optional):</label>
-                    <select id="content-selector">
+                    <label for="content-selector">Select Content (Optional)</label>
+                    <select id="content-selector" class="frost-input">
                         <option value="">Loading content items...</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="schedule-name">Schedule Name:</label>
-                    <input type="text" id="schedule-name" placeholder="e.g., Daily Morning Post" required>
+                    <label for="schedule-name">Schedule Name</label>
+                    <input type="text" id="schedule-name" class="frost-input" placeholder="e.g., Daily Morning Post" required>
                 </div>
                 <div class="form-group">
-                    <label for="schedule-type">Schedule Type:</label>
-                    <select id="schedule-type">
+                    <label for="schedule-type">Schedule Type</label>
+                    <select id="schedule-type" class="frost-input">
                         <option value="one-time">One-time</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
@@ -184,21 +279,18 @@
                         <option value="custom">Custom (Advanced)</option>
                     </select>
                 </div>
-
                 <div class="form-group" id="one-time-schedule" style="display: none;">
-                    <label for="schedule-datetime">Date & Time:</label>
-                    <input type="datetime-local" id="schedule-datetime" min="">
+                    <label for="schedule-datetime">Date & Time</label>
+                    <input type="datetime-local" id="schedule-datetime" class="frost-input" min="">
                     <small>Select a future date and time (server timezone: <span id="schedule-timezone-display-onetime">loading...</span>)</small>
                 </div>
-
                 <div class="form-group" id="recurring-options" style="display: none;">
-                    <label for="schedule-time">Time of Day:</label>
-                    <input type="time" id="schedule-time">
+                    <label for="schedule-time">Time of Day</label>
+                    <input type="time" id="schedule-time" class="frost-input">
                     <small>Select the time when this schedule should run (server timezone: <span id="schedule-timezone-display">loading...</span>)</small>
-
                     <div id="weekly-options" style="display: none; margin-top: 1rem;">
-                        <label>Days of Week:</label>
-                        <div>
+                        <label style="margin-bottom: 0.75rem;">Days of Week</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             <input type="checkbox" id="day-sun" value="0"><label for="day-sun">Sunday</label>
                             <input type="checkbox" id="day-mon" value="1"><label for="day-mon">Monday</label>
                             <input type="checkbox" id="day-tue" value="2"><label for="day-tue">Tuesday</label>
@@ -209,17 +301,15 @@
                         </div>
                         <small>Select one or more days for weekly execution</small>
                     </div>
-
                     <div id="monthly-options" style="display: none; margin-top: 1rem;">
-                        <label for="month-day">Day of Month:</label>
-                        <input type="number" id="month-day" min="1" max="31" value="1">
+                        <label for="month-day">Day of Month</label>
+                        <input type="number" id="month-day" class="frost-input" min="1" max="31" value="1" style="max-width: 120px;">
                         <small>Enter day of month (1-31) for monthly execution</small>
                     </div>
                 </div>
-
                 <div class="form-group" id="custom-cron" style="display: none;">
-                    <label for="cron-expression">Custom Cron Expression:</label>
-                    <input type="text" id="cron-expression" placeholder="e.g., 0 9 * * *">
+                    <label for="cron-expression">Custom Cron Expression</label>
+                    <input type="text" id="cron-expression" class="frost-input" placeholder="e.g., 0 9 * * *">
                     <div class="cron-help">
                         <strong>Cron Format:</strong> minute hour day month day-of-week<br>
                         Examples:<br>
@@ -228,727 +318,250 @@
                         &bull; 0 0 1 * * = Monthly on the 1st at midnight
                     </div>
                 </div>
-                <button type="submit">Save Schedule</button>
-                <button type="button" id="cancel-btn" style="display: none;">Cancel</button>
+                <button type="submit" class="btn-primary">Save Schedule</button>
+                <button type="button" id="cancel-btn" class="btn-secondary" style="display: none;">Cancel</button>
             </form>
         </div>
 
-        <div class="card">
-            <h2>Content Management</h2>
-            <div id="message-content"></div>
-
-            <form id="content-form">
-                <input type="hidden" id="content-id">
-                <div class="form-group">
-                    <label for="content-title">Title:</label>
-                    <input type="text" id="content-title" placeholder="e.g., New Product Launch" required>
-                </div>
-                <div class="form-group">
-                    <label for="content-description">Description:</label>
-                    <textarea id="content-description" rows="3" placeholder="Describe your content..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="content-urls">Resource Image URLs (one per line):</label>
-                    <textarea id="content-urls" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
-                </div>
-                <button type="submit">Save Content</button>
-                <button type="button" id="cancel-content-btn" style="display: none;">Cancel</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <h2>Your Content Items</h2>
-            <div id="content-list">
-                <p>Loading content items...</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Your Scheduled Automations</h2>
-            <div id="schedules-list">
-                <p>Loading schedules...</p>
-            </div>
+        <div class="glass-card">
+            <div class="card-title">Your Scheduled Automations</div>
+            <div id="schedules-list"><p style="color: var(--text-muted);">Loading schedules...</p></div>
         </div>
     </div>
 
     <script src="supabase.js"></script>
     <script>
-        // BACKEND_API_URL is defined in supabase.js
-
-        // Store loaded data for edit lookups (avoids inline string escaping issues)
-        let contentItemsData = [];
         let schedulesData = [];
 
-        // Check if user is logged in
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Check if Supabase is properly loaded
-                if (typeof _supabase === 'undefined') {
-                    console.error('Supabase is not properly initialized');
-                    showMessage('Error: Could not connect to the database. Please refresh the page.', 'error');
-                    return;
-                }
-
+                if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
                 const { data: { user } } = await _supabase.auth.getUser();
+                if (!user) { window.location.href = 'login.html'; return; }
 
-                if (!user) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                // Fetch and display the server's schedule timezone
                 try {
                     const tzResponse = await apiRequest(`${BACKEND_API_URL}/timezone`);
                     const tzResult = await tzResponse.json();
                     if (tzResult.success && tzResult.timezone) {
                         const tzDisplay = tzResult.timezone.replace('_', ' ');
-                        const displayEl = document.getElementById('schedule-timezone-display');
-                        const displayEl2 = document.getElementById('schedule-timezone-display-onetime');
-                        if (displayEl) displayEl.textContent = tzDisplay;
-                        if (displayEl2) displayEl2.textContent = tzDisplay;
+                        const d1 = document.getElementById('schedule-timezone-display');
+                        const d2 = document.getElementById('schedule-timezone-display-onetime');
+                        if (d1) d1.textContent = tzDisplay;
+                        if (d2) d2.textContent = tzDisplay;
                     }
                 } catch (e) {
                     console.warn('Could not fetch server timezone:', e);
-                    const displayEl = document.getElementById('schedule-timezone-display');
-                    const displayEl2 = document.getElementById('schedule-timezone-display-onetime');
-                    if (displayEl) displayEl.textContent = 'unknown';
-                    if (displayEl2) displayEl2.textContent = 'unknown';
+                    const d1 = document.getElementById('schedule-timezone-display');
+                    const d2 = document.getElementById('schedule-timezone-display-onetime');
+                    if (d1) d1.textContent = 'unknown';
+                    if (d2) d2.textContent = 'unknown';
                 }
 
-                // Load user workflows
                 await loadUserWorkflows();
-
-                // Load user schedules
                 await loadUserSchedules();
-
-                // Handle form submission
-                document.getElementById('schedule-form').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    await saveSchedule();
-                });
-
-                // Handle cancel button
+                document.getElementById('schedule-form').addEventListener('submit', async function(e) { e.preventDefault(); await saveSchedule(); });
                 document.getElementById('cancel-btn').addEventListener('click', cancelEdit);
-
-                // Handle schedule type change
                 document.getElementById('schedule-type').addEventListener('change', updateScheduleForm);
-
-                // Initialize schedule form
                 updateScheduleForm();
+                const now = new Date();
+                document.getElementById('schedule-datetime').min = now.toISOString().slice(0, 16);
 
-                // Load user content items
-                await loadUserContentItems();
-
-                // Handle content form submission
-                document.getElementById('content-form').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    await saveContentItem();
+                document.getElementById('logout-btn').addEventListener('click', async function() {
+                    const { error } = await _supabase.auth.signOut();
+                    if (error) console.error('Error logging out:', error);
+                    window.location.href = 'index.html';
                 });
 
-                // Handle cancel content button
-                document.getElementById('cancel-content-btn').addEventListener('click', cancelContentEdit);
-
-                // Set minimum datetime to current time
-                const now = new Date();
-                const minDatetime = now.toISOString().slice(0, 16);
-                document.getElementById('schedule-datetime').min = minDatetime;
-            } catch (error) {
-                console.error('Error during initialization:', error);
-                showMessage('Error initializing page: ' + error.message, 'error');
-            }
+                const navToggle = document.getElementById('nav-toggle');
+                const navbarCenter = document.getElementById('navbar-center');
+                navToggle.addEventListener('click', () => {
+                    navToggle.classList.toggle('open');
+                    navbarCenter.classList.toggle('open');
+                });
+                navbarCenter.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navToggle.classList.remove('open');
+                        navbarCenter.classList.remove('open');
+                    });
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.navbar')) {
+                        navToggle.classList.remove('open');
+                        navbarCenter.classList.remove('open');
+                    }
+                });
+            } catch (error) { console.error('Error during initialization:', error); showMessage('Error initializing page: ' + error.message, 'error'); }
         });
 
-        // Load user's workflows and content items
         async function loadUserWorkflows() {
             const { data: { user } } = await _supabase.auth.getUser();
             if (!user) return;
-
-            // Load workflows from Supabase directly (independent of backend API)
             try {
-                const { data: workflowData, error: workflowError } = await _supabase
-                    .from('user_workflows')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-
+                const { data: workflowData, error: workflowError } = await _supabase.from('user_workflows').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
                 if (workflowError) throw workflowError;
-
                 const workflowSelector = document.getElementById('workflow-selector');
                 workflowSelector.innerHTML = '';
-
-                if (workflowData.length === 0) {
-                    workflowSelector.innerHTML = '<option value="">No workflows found</option>';
-                } else {
-                    workflowData.forEach(workflow => {
-                        const option = document.createElement('option');
-                        option.value = workflow.workflow_id;
-                        option.textContent = `${workflow.name} (${workflow.workflow_id})`;
-                        workflowSelector.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading workflows:', error);
-                document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>';
-            }
-
-            // Load content items for dropdown (independent of Supabase query above)
+                if (workflowData.length === 0) { workflowSelector.innerHTML = '<option value="">No workflows found</option>'; }
+                else { workflowData.forEach(w => { const o = document.createElement('option'); o.value = w.workflow_id; o.textContent = `${w.name} (${w.workflow_id})`; workflowSelector.appendChild(o); }); }
+            } catch (error) { document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>'; }
             try {
                 const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
-
                 if (result.success) {
                     const contentSelector = document.getElementById('content-selector');
                     contentSelector.innerHTML = '<option value="">None (no content)</option>';
-
-                    if (result.content && result.content.length > 0) {
-                        result.content.forEach(item => {
-                            const option = document.createElement('option');
-                            option.value = item.id;
-                            option.textContent = item.title;
-                            contentSelector.appendChild(option);
-                        });
-                    }
+                    if (result.content && result.content.length > 0) { result.content.forEach(item => { const o = document.createElement('option'); o.value = item.id; o.textContent = item.title; contentSelector.appendChild(o); }); }
                 }
-            } catch (error) {
-                console.error('Error loading content for dropdown:', error);
-                document.getElementById('content-selector').innerHTML = '<option value="">Error loading content</option>';
-            }
+            } catch (error) { document.getElementById('content-selector').innerHTML = '<option value="">Error loading content</option>'; }
         }
 
-        // Load user's content items
-        async function loadUserContentItems() {
-            try {
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) {
-                    throw new Error('User not authenticated');
-                }
-
-                const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to load content items');
-                }
-
-                const listElement = document.getElementById('content-list');
-
-                if (!result.content || result.content.length === 0) {
-                    listElement.innerHTML = '<p>You haven\'t created any content items yet.</p>';
-                    return;
-                }
-
-                // Store for edit lookups
-                contentItemsData = result.content;
-
-                let html = '<div>';
-                result.content.forEach(item => {
-                    html += `
-                        <div class="schedule-item">
-                            <div>
-                                <strong>${escapeHtml(item.title)}</strong><br>
-                                <small>${escapeHtml(item.description || 'No description')}</small><br>
-                                <small>Images: ${item.resource_urls ? item.resource_urls.length : 0}</small>
-                            </div>
-                            <div>
-                                <button onclick="editContentItem(${item.id})">Edit</button>
-                                <button class="delete-btn" onclick="deleteContentItem(${item.id})">Delete</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-
-                listElement.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading content items:', error);
-                document.getElementById('content-list').innerHTML = '<p>Error loading content items.</p>';
-                showMessage('Error loading content items: ' + error.message, 'error', 'message-content');
-            }
-        }
-
-        // Save a content item
-        async function saveContentItem() {
-            try {
-                const contentId = document.getElementById('content-id').value;
-                const title = document.getElementById('content-title').value;
-                const description = document.getElementById('content-description').value;
-                const urlsText = document.getElementById('content-urls').value;
-
-                // Parse URLs from textarea (one per line)
-                let resourceUrls = [];
-                if (urlsText.trim()) {
-                    resourceUrls = urlsText.split('\n').map(url => url.trim()).filter(url => url);
-                }
-
-                if (!title) {
-                    showMessage('Please enter a title', 'error', 'message-content');
-                    return;
-                }
-
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) {
-                    throw new Error('User not authenticated');
-                }
-
-                const contentData = {
-                    title: title,
-                    description: description,
-                    resource_urls: resourceUrls,
-                    user_id: user.id
-                };
-
-                let response;
-                if (contentId) {
-                    // Update existing content item
-                    response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(contentData)
-                    });
-                } else {
-                    // Create new content item
-                    response = await apiRequest(`${BACKEND_API_URL}/content`, {
-                        method: 'POST',
-                        body: JSON.stringify(contentData)
-                    });
-                }
-
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to save content item');
-                }
-
-                // Show success message
-                showMessage(contentId ? 'Content item updated successfully!' : 'Content item created successfully!', 'success', 'message-content');
-
-                // Reset form
-                document.getElementById('content-form').reset();
-                document.getElementById('content-id').value = '';
-                document.getElementById('cancel-content-btn').style.display = 'none';
-
-                // Reload content items
-                await loadUserContentItems();
-            } catch (error) {
-                console.error('Error saving content item:', error);
-                showMessage('Error saving content item: ' + error.message, 'error', 'message-content');
-            }
-        }
-
-        // Edit a content item
-        function editContentItem(id) {
-            const item = contentItemsData.find(i => String(i.id) === String(id));
-            if (!item) {
-                console.error('Content item not found:', id, 'Available:', contentItemsData.map(i => i.id));
-                showMessage('Could not find content item data. Try refreshing the page.', 'error', 'message-content');
-                return;
-            }
-
-            document.getElementById('content-id').value = item.id;
-            document.getElementById('content-title').value = item.title;
-            document.getElementById('content-description').value = item.description || '';
-
-            // Convert array of URLs to textarea format (one per line)
-            const urlsText = Array.isArray(item.resource_urls) ? item.resource_urls.join('\n') : '';
-            document.getElementById('content-urls').value = urlsText;
-
-            document.getElementById('cancel-content-btn').style.display = 'inline-block';
-            // Scroll to the form
-            document.getElementById('content-form').scrollIntoView();
-        }
-
-        // Cancel content edit
-        function cancelContentEdit() {
-            document.getElementById('content-form').reset();
-            document.getElementById('content-id').value = '';
-            document.getElementById('cancel-content-btn').style.display = 'none';
-        }
-
-        // Delete a content item
-        async function deleteContentItem(contentId) {
-            if (!confirm('Are you sure you want to delete this content item?')) {
-                return;
-            }
-
-            try {
-                const response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, {
-                    method: 'DELETE'
-                });
-
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to delete content item');
-                }
-
-                showMessage('Content item deleted successfully!', 'success', 'message-content');
-                await loadUserContentItems();
-            } catch (error) {
-                console.error('Error deleting content item:', error);
-                showMessage('Error deleting content item: ' + error.message, 'error', 'message-content');
-            }
-        }
-
-        // Load user's schedules
         async function loadUserSchedules() {
             try {
                 const response = await apiRequest(`${BACKEND_API_URL}/schedules`);
                 const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to load schedules');
-                }
-
+                if (!result.success) throw new Error(result.error || 'Failed to load schedules');
                 const listElement = document.getElementById('schedules-list');
-
-                if (!result.schedules || result.schedules.length === 0) {
-                    listElement.innerHTML = '<p>You haven\'t created any schedules yet.</p>';
-                    return;
-                }
-
-                // Store for edit lookups
+                if (!result.schedules || result.schedules.length === 0) { listElement.innerHTML = '<p style="color:var(--text-muted);">You haven\'t created any schedules yet.</p>'; return; }
                 schedulesData = result.schedules;
-
-                let html = '<div>';
+                let html = '';
                 result.schedules.forEach(schedule => {
-                    // Try to parse cron expression for user-friendly display
                     let scheduleDescription = `Workflow: ${escapeHtml(schedule.workflow_id)}`;
-
                     try {
                         const cronParts = schedule.cron_expression.split(' ');
                         if (cronParts.length >= 5) {
                             const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
-
-                            if (minute === '0' && hour === '0' && dayOfMonth !== '*' && month === '*' && dayOfWeek === '*') {
-                                scheduleDescription += `<br>Runs monthly on day ${dayOfMonth} at 12:00 AM`;
-                            } else if (minute === '0' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
-                                scheduleDescription += `<br>Runs daily at ${hour}:00`;
-                            } else if (minute !== '*' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') {
-                                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                                const dayNames = dayOfWeek.split(',').map(d => days[parseInt(d)] || `day ${d}`).join(', ');
-                                scheduleDescription += `<br>Runs weekly on ${dayNames} at ${hour}:${minute}`;
-                            } else {
-                                scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
-                            }
-                        } else {
-                            scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
-                        }
-                    } catch (e) {
-                        scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
-                    }
-
-                    // Add content information if available
-                    if (schedule.content_items) {
-                        scheduleDescription += `<br>Content: ${escapeHtml(schedule.content_items.title)}`;
-                    }
-
-                    // Add next execution time if available
-                    let nextExecHtml = '';
-                    if (schedule.next_execution) {
-                        nextExecHtml = `<br><strong style="color: #4CAF50;">Next execution: ${schedule.next_execution}</strong>`;
-                        scheduleDescription += nextExecHtml;
-                    }
-
-                    html += `
-                        <div class="schedule-item">
-                            <div>
-                                <strong>${escapeHtml(schedule.name || 'Unnamed Schedule')}</strong><br>
-                                <small>${scheduleDescription}</small>
-                            </div>
-                            <div>
-                                <button onclick="editSchedule('${schedule.id}')">Edit</button>
-                                <button class="delete-btn" onclick="deleteSchedule('${schedule.id}')">Delete</button>
-                            </div>
-                        </div>
-                    `;
+                            if (minute === '0' && hour === '0' && dayOfMonth !== '*' && month === '*' && dayOfWeek === '*') scheduleDescription += `<br>Runs monthly on day ${dayOfMonth} at 12:00 AM`;
+                            else if (minute === '0' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') scheduleDescription += `<br>Runs daily at ${hour}:00`;
+                            else if (minute !== '*' && hour !== '*' && dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') { const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; scheduleDescription += `<br>Runs weekly on ${dayOfWeek.split(',').map(d=>days[parseInt(d)]||`day ${d}`).join(', ')} at ${hour}:${minute}`; }
+                            else scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
+                        } else scheduleDescription += `<br>Cron: ${schedule.cron_expression}`;
+                    } catch (e) { scheduleDescription += `<br>Cron: ${schedule.cron_expression}`; }
+                    if (schedule.content_items) scheduleDescription += `<br>Content: ${escapeHtml(schedule.content_items.title)}`;
+                    if (schedule.next_execution) scheduleDescription += `<br><strong style="color:var(--blue-mid);">Next: ${schedule.next_execution}</strong>`;
+                    html += `<div class="schedule-item"><div><strong>${escapeHtml(schedule.name || 'Unnamed Schedule')}</strong><br><small style="color:var(--text-muted);">${scheduleDescription}</small></div><div><button class="btn-edit" onclick="editSchedule('${schedule.id}')">Edit</button><button class="btn-danger" onclick="deleteSchedule('${schedule.id}')">Delete</button></div></div>`;
                 });
-                html += '</div>';
-
                 listElement.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading schedules:', error);
-                document.getElementById('schedules-list').innerHTML = '<p>Error loading schedules.</p>';
-                showMessage('Error loading schedules: ' + error.message, 'error');
-            }
+            } catch (error) { document.getElementById('schedules-list').innerHTML = '<p style="color:var(--text-muted);">Error loading schedules.</p>'; showMessage('Error loading schedules: ' + error.message, 'error'); }
         }
 
-        // Save a schedule
         async function saveSchedule() {
             try {
                 const scheduleId = document.getElementById('schedule-id').value;
                 const workflowId = document.getElementById('workflow-selector').value;
                 const name = document.getElementById('schedule-name').value;
                 const scheduleType = document.getElementById('schedule-type').value;
-
-                // Get schedule data based on type
-                let scheduleData = {};
-                let cronExpression = '';
-
+                let scheduleData = {}; let cronExpression = ''; var isoDatetime;
                 switch (scheduleType) {
                     case 'one-time':
                         const datetimeInput = document.getElementById('schedule-datetime').value;
-                        if (!datetimeInput) {
-                            showMessage('Please select a date and time', 'error');
-                            return;
-                        }
-
-                        // Validate that the datetime is in the future
+                        if (!datetimeInput) { showMessage('Please select a date and time', 'error'); return; }
                         const selectedDatetime = new Date(datetimeInput);
-                        const now = new Date();
-                        if (selectedDatetime <= now) {
-                            showMessage('Please select a future date and time', 'error');
-                            return;
-                        }
-
+                        if (selectedDatetime <= new Date()) { showMessage('Please select a future date and time', 'error'); return; }
                         scheduleData.datetime = datetimeInput;
-                        // Convert datetime to standard cron expression for daily execution
-                        // We'll handle the one-time aspect in the backend by storing additional metadata
                         cronExpression = `${selectedDatetime.getMinutes()} ${selectedDatetime.getHours()} ${selectedDatetime.getDate()} ${selectedDatetime.getMonth() + 1} *`;
-
-                        // Send the datetime in a format that preserves local time intention
-                        // We'll send the ISO string but the backend will interpret it as local time
-                        var isoDatetime = selectedDatetime.toISOString();
+                        isoDatetime = selectedDatetime.toISOString();
                         break;
-
                     case 'daily':
                         const dailyTime = document.getElementById('schedule-time').value;
-                        if (!dailyTime) {
-                            showMessage('Please select a time', 'error');
-                            return;
-                        }
+                        if (!dailyTime) { showMessage('Please select a time', 'error'); return; }
                         scheduleData.time = dailyTime;
-                        const dailyTimeParts = dailyTime.split(':');
-                        cronExpression = `${dailyTimeParts[1]} ${dailyTimeParts[0]} * * *`;
+                        cronExpression = `${dailyTime.split(':')[1]} ${dailyTime.split(':')[0]} * * *`;
                         break;
-
                     case 'weekly':
                         const weeklyTime = document.getElementById('schedule-time').value;
-                        if (!weeklyTime) {
-                            showMessage('Please select a time', 'error');
-                            return;
-                        }
-
-                        // Get selected days
+                        if (!weeklyTime) { showMessage('Please select a time', 'error'); return; }
                         const dayCheckboxes = document.querySelectorAll('#weekly-options input[type="checkbox"]:checked');
-                        if (dayCheckboxes.length === 0) {
-                            showMessage('Please select at least one day', 'error');
-                            return;
-                        }
-
+                        if (dayCheckboxes.length === 0) { showMessage('Please select at least one day', 'error'); return; }
                         const days = Array.from(dayCheckboxes).map(cb => cb.value).join(',');
-                        scheduleData.time = weeklyTime;
-                        scheduleData.days = days.split(',');
-
-                        const weeklyTimeParts = weeklyTime.split(':');
-                        cronExpression = `${weeklyTimeParts[1]} ${weeklyTimeParts[0]} * * ${days}`;
+                        scheduleData.time = weeklyTime; scheduleData.days = days.split(',');
+                        cronExpression = `${weeklyTime.split(':')[1]} ${weeklyTime.split(':')[0]} * * ${days}`;
                         break;
-
                     case 'monthly':
                         const monthlyTime = document.getElementById('schedule-time').value;
                         const monthDay = document.getElementById('month-day').value;
-                        if (!monthlyTime) {
-                            showMessage('Please select a time', 'error');
-                            return;
-                        }
-                        if (!monthDay || monthDay < 1 || monthDay > 31) {
-                            showMessage('Please enter a valid day of month (1-31)', 'error');
-                            return;
-                        }
-
-                        scheduleData.time = monthlyTime;
-                        scheduleData.day = monthDay;
-
-                        const monthlyTimeParts = monthlyTime.split(':');
-                        cronExpression = `${monthlyTimeParts[1]} ${monthlyTimeParts[0]} ${monthDay} * *`;
+                        if (!monthlyTime) { showMessage('Please select a time', 'error'); return; }
+                        if (!monthDay || monthDay < 1 || monthDay > 31) { showMessage('Please enter a valid day (1-31)', 'error'); return; }
+                        scheduleData.time = monthlyTime; scheduleData.day = monthDay;
+                        cronExpression = `${monthlyTime.split(':')[1]} ${monthlyTime.split(':')[0]} ${monthDay} * *`;
                         break;
-
                     case 'custom':
                         cronExpression = document.getElementById('cron-expression').value;
-                        if (!cronExpression) {
-                            showMessage('Please enter a cron expression', 'error');
-                            return;
-                        }
+                        if (!cronExpression) { showMessage('Please enter a cron expression', 'error'); return; }
                         break;
-
-                    default:
-                        showMessage('Please select a schedule type', 'error');
-                        return;
+                    default: showMessage('Please select a schedule type', 'error'); return;
                 }
-
-                if (!workflowId) {
-                    showMessage('Please select a workflow', 'error');
-                    return;
-                }
-
+                if (!workflowId) { showMessage('Please select a workflow', 'error'); return; }
                 const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) {
-                    throw new Error('User not authenticated');
-                }
-
-                // Get selected content item
+                if (!user) throw new Error('User not authenticated');
                 const contentItemId = document.getElementById('content-selector').value;
-
-                const scheduleDataToSend = {
-                    workflow_id: workflowId,
-                    cron_expression: cronExpression,
-                    name: name || `Schedule for ${workflowId}`,
-                    user_id: user.id,
-                    is_one_time: scheduleType === 'one-time',
-                    one_time_date: scheduleType === 'one-time' ? isoDatetime : null,
-                    content_item_id: contentItemId ? parseInt(contentItemId) : null
-                };
-
+                const scheduleDataToSend = { workflow_id: workflowId, cron_expression: cronExpression, name: name || `Schedule for ${workflowId}`, user_id: user.id, is_one_time: scheduleType === 'one-time', one_time_date: scheduleType === 'one-time' ? isoDatetime : null, content_item_id: contentItemId ? parseInt(contentItemId) : null };
                 let response;
-                if (scheduleId) {
-                    // Update existing schedule
-                    response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(scheduleDataToSend)
-                    });
-                } else {
-                    // Create new schedule
-                    response = await apiRequest(`${BACKEND_API_URL}/schedules`, {
-                        method: 'POST',
-                        body: JSON.stringify(scheduleDataToSend)
-                    });
-                }
-
+                if (scheduleId) { response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, { method: 'PUT', body: JSON.stringify(scheduleDataToSend) }); }
+                else { response = await apiRequest(`${BACKEND_API_URL}/schedules`, { method: 'POST', body: JSON.stringify(scheduleDataToSend) }); }
                 const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to save schedule');
-                }
-
-                // Show success message
-                showMessage(scheduleId ? 'Schedule updated successfully!' : 'Schedule created successfully!', 'success');
-
-                // Reset form
+                if (!result.success) throw new Error(result.error || 'Failed to save schedule');
+                showMessage(scheduleId ? 'Schedule updated!' : 'Schedule created!', 'success');
                 document.getElementById('schedule-form').reset();
                 document.getElementById('schedule-id').value = '';
                 document.getElementById('cancel-btn').style.display = 'none';
-
-                // Reset form visibility
                 updateScheduleForm();
-
-                // Reload schedules
                 await loadUserSchedules();
-            } catch (error) {
-                console.error('Error saving schedule:', error);
-                showMessage('Error saving schedule: ' + error.message, 'error');
-            }
+            } catch (error) { showMessage('Error saving schedule: ' + error.message, 'error'); }
         }
 
-        // Edit a schedule
         function editSchedule(id) {
             const schedule = schedulesData.find(s => String(s.id) === String(id));
-            if (!schedule) {
-                console.error('Schedule not found:', id, 'Available:', schedulesData.map(s => s.id));
-                showMessage('Could not find schedule data. Try refreshing the page.', 'error');
-                return;
-            }
-
+            if (!schedule) { showMessage('Could not find schedule data. Try refreshing.', 'error'); return; }
             document.getElementById('schedule-id').value = schedule.id;
             document.getElementById('workflow-selector').value = schedule.workflow_id;
             document.getElementById('schedule-name').value = schedule.name || '';
-
-            // Set content item if available
-            if (schedule.content_item_id) {
-                document.getElementById('content-selector').value = schedule.content_item_id;
-            } else {
-                document.getElementById('content-selector').value = '';
-            }
-
-            // For editing, default to custom cron expression
+            if (schedule.content_item_id) document.getElementById('content-selector').value = schedule.content_item_id;
+            else document.getElementById('content-selector').value = '';
             document.getElementById('schedule-type').value = 'custom';
             document.getElementById('cron-expression').value = schedule.cron_expression;
-
-            // Show custom cron form
             updateScheduleForm();
-
-            document.getElementById('cancel-btn').style.display = 'inline-block';
+            document.getElementById('cancel-btn').style.display = 'inline-flex';
         }
 
-        // Cancel edit
         function cancelEdit() {
             document.getElementById('schedule-form').reset();
             document.getElementById('schedule-id').value = '';
             document.getElementById('cancel-btn').style.display = 'none';
-
-            // Reset form visibility
             updateScheduleForm();
-
-            // Clear checkboxes
-            document.querySelectorAll('#weekly-options input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
+            document.querySelectorAll('#weekly-options input[type="checkbox"]').forEach(cb => { cb.checked = false; });
         }
 
-        // Update schedule form visibility based on selected type
         function updateScheduleForm() {
             const scheduleType = document.getElementById('schedule-type').value;
-
-            // Hide all schedule options first
             document.getElementById('one-time-schedule').style.display = 'none';
             document.getElementById('recurring-options').style.display = 'none';
             document.getElementById('custom-cron').style.display = 'none';
             document.getElementById('weekly-options').style.display = 'none';
             document.getElementById('monthly-options').style.display = 'none';
-
-            // Show relevant options based on schedule type
             switch(scheduleType) {
-                case 'one-time':
-                    document.getElementById('one-time-schedule').style.display = 'block';
-                    break;
-                case 'daily':
-                    document.getElementById('recurring-options').style.display = 'block';
-                    break;
-                case 'weekly':
-                    document.getElementById('recurring-options').style.display = 'block';
-                    document.getElementById('weekly-options').style.display = 'block';
-                    break;
-                case 'monthly':
-                    document.getElementById('recurring-options').style.display = 'block';
-                    document.getElementById('monthly-options').style.display = 'block';
-                    break;
-                case 'custom':
-                    document.getElementById('custom-cron').style.display = 'block';
-                    break;
+                case 'one-time': document.getElementById('one-time-schedule').style.display = 'block'; break;
+                case 'daily': document.getElementById('recurring-options').style.display = 'block'; break;
+                case 'weekly': document.getElementById('recurring-options').style.display = 'block'; document.getElementById('weekly-options').style.display = 'block'; break;
+                case 'monthly': document.getElementById('recurring-options').style.display = 'block'; document.getElementById('monthly-options').style.display = 'block'; break;
+                case 'custom': document.getElementById('custom-cron').style.display = 'block'; break;
             }
         }
 
-        // Delete a schedule
         async function deleteSchedule(scheduleId) {
-            if (!confirm('Are you sure you want to delete this schedule?')) {
-                return;
-            }
-
+            if (!confirm('Are you sure you want to delete this schedule?')) return;
             try {
-                const response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, {
-                    method: 'DELETE'
-                });
-
+                const response = await apiRequest(`${BACKEND_API_URL}/schedules/${scheduleId}`, { method: 'DELETE' });
                 const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to delete schedule');
-                }
-
-                showMessage('Schedule deleted successfully!', 'success');
+                if (!result.success) throw new Error(result.error || 'Failed to delete');
+                showMessage('Schedule deleted!', 'success');
                 await loadUserSchedules();
-            } catch (error) {
-                console.error('Error deleting schedule:', error);
-                showMessage('Error deleting schedule: ' + error.message, 'error');
-            }
+            } catch (error) { showMessage('Error deleting: ' + error.message, 'error'); }
         }
 
-        // Show message to user
         function showMessage(text, type, elementId = 'message') {
-            const messageElement = document.getElementById(elementId);
-            messageElement.innerHTML = `<div class="message ${type}">${text}</div>`;
-
-            // Clear message after 5 seconds
-            setTimeout(() => {
-                messageElement.innerHTML = '';
-            }, 5000);
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+            setTimeout(() => { el.innerHTML = ''; }, 5000);
         }
     </script>
 </body>

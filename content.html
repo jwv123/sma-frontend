@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflows — ShareShift</title>
+    <title>Content — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,11 +36,10 @@
         }
 
         h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; }
+        body input, body textarea { color: var(--text-primary); }
 
-        /* Navbar */
         .navbar {
-            position: sticky;
-            top: 0; z-index: 100;
+            position: sticky; top: 0; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.75rem 2rem;
             background: rgba(255, 255, 255, 0.85);
@@ -59,7 +58,6 @@
         }
 
         .navbar-logo img { width: 100%; height: 100%; object-fit: cover; }
-
         .navbar-name { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--navy-deep); }
 
         .nav-toggle {
@@ -94,7 +92,6 @@
 
         .btn-signout:hover { background: rgba(220, 53, 69, 0.12); color: #881828; }
 
-        /* Content */
         .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
 
         .glass-card {
@@ -129,6 +126,8 @@
         .frost-input::placeholder { color: var(--text-muted); }
         .frost-input:focus { border-color: rgba(18, 128, 192, 0.5); box-shadow: 0 0 0 3px rgba(18, 128, 192, 0.1); }
 
+        textarea.frost-input { resize: vertical; min-height: 80px; }
+
         .btn-primary {
             display: inline-flex; align-items: center; justify-content: center;
             padding: 0.65rem 1.5rem; border-radius: 12px; font-family: 'Sora', sans-serif;
@@ -140,6 +139,14 @@
 
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(18, 128, 192, 0.35); }
 
+        .btn-secondary {
+            display: inline-flex; background: #FFFFFF; border: 1px solid var(--glass-border); color: var(--navy-deep);
+            padding: 0.65rem 1.5rem; border-radius: 12px; font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; margin-right: 0.5rem;
+        }
+
+        .btn-secondary:hover { background: var(--surface); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.08); }
+
         .btn-danger {
             display: inline-flex; padding: 0.65rem 1.5rem; border-radius: 12px;
             font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.85rem;
@@ -149,27 +156,24 @@
 
         .btn-danger:hover { background: rgba(220, 53, 69, 0.12); }
 
-        .btn-trigger {
+        .btn-edit {
             display: inline-flex; padding: 0.65rem 1.5rem; border-radius: 12px;
             font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.85rem;
-            cursor: pointer; border: none; transition: all 0.3s; margin-right: 0.5rem;
-            background: linear-gradient(135deg, #1280C0, #40A0E0); color: #FFFFFF;
-            box-shadow: 0 2px 8px rgba(18, 128, 192, 0.2);
+            cursor: pointer; transition: all 0.3s; margin-right: 0.5rem;
+            border: 1px solid rgba(18, 128, 192, 0.2); background: rgba(18, 128, 192, 0.06); color: var(--blue-mid);
         }
 
-        .btn-trigger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(18, 128, 192, 0.3); }
-        .btn-trigger:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-edit:hover { background: rgba(18, 128, 192, 0.12); }
 
-        .workflow-item {
+        .content-item {
             background: #FFFFFF; border: 1px solid var(--glass-border); border-radius: 14px;
             padding: 1.25rem; margin-bottom: 0.75rem;
             display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;
         }
 
-        .workflow-item:hover { border-color: rgba(18, 128, 192, 0.2); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.05); }
+        .content-item:hover { border-color: rgba(18, 128, 192, 0.2); box-shadow: 0 2px 8px rgba(3, 73, 133, 0.05); }
 
         .message { padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 12px; font-size: 0.9rem; }
-
         .success { background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.2); color: #1A7A30; }
         .error { background: rgba(220, 53, 69, 0.08); border: 1px solid rgba(220, 53, 69, 0.2); color: #A82030; }
 
@@ -191,8 +195,8 @@
             .btn-signout { margin-top: 0.5rem; width: 100%; text-align: center; justify-content: center; }
             .container { padding: 1rem; }
             .glass-card { padding: 1.5rem; }
-            .workflow-item { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
-            .workflow-item > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+            .content-item { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+            .content-item > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
         }
 
         @media (max-width: 480px) {
@@ -214,9 +218,9 @@
         </button>
         <div class="navbar-center" id="navbar-center">
             <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="workflows.html" class="nav-link active">Workflows</a>
+            <a href="workflows.html" class="nav-link">Workflows</a>
             <a href="scheduler.html" class="nav-link">Scheduler</a>
-            <a href="content.html" class="nav-link">Content</a>
+            <a href="content.html" class="nav-link active">Content</a>
             <a href="logs.html" class="nav-link">Logs</a>
             <button id="logout-btn" class="btn-signout">Sign Out</button>
         </div>
@@ -224,40 +228,47 @@
 
     <div class="container">
         <div class="glass-card">
-            <div class="card-title">Add Workflow</div>
+            <div class="card-title">Add Content</div>
             <div id="message"></div>
-            <form id="workflow-form">
+            <form id="content-form">
+                <input type="hidden" id="content-id">
                 <div class="form-group">
-                    <label for="workflow-name">Workflow Name</label>
-                    <input type="text" id="workflow-name" class="frost-input" placeholder="e.g., Daily Post Scheduler" required>
+                    <label for="content-title">Title</label>
+                    <input type="text" id="content-title" class="frost-input" placeholder="e.g., New Product Launch" required>
                 </div>
                 <div class="form-group">
-                    <label for="workflow-id">Workflow ID</label>
-                    <input type="text" id="workflow-id" class="frost-input" placeholder="Enter n8n workflow ID" required>
+                    <label for="content-description">Description</label>
+                    <textarea id="content-description" class="frost-input" rows="3" placeholder="Describe your content..."></textarea>
                 </div>
-                <button type="submit" class="btn-primary">Add Workflow</button>
+                <div class="form-group">
+                    <label for="content-urls">Resource Image URLs (one per line)</label>
+                    <textarea id="content-urls" class="frost-input" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Content</button>
+                <button type="button" id="cancel-content-btn" class="btn-secondary" style="display: none;">Cancel</button>
             </form>
         </div>
 
         <div class="glass-card">
-            <div class="card-title">Your Saved Workflows</div>
-            <div id="workflows-list">
-                <p style="color: var(--text-muted);">Loading workflows...</p>
-            </div>
+            <div class="card-title">Your Content Items</div>
+            <div id="content-list"><p style="color: var(--text-muted);">Loading content items...</p></div>
         </div>
     </div>
 
     <script src="supabase.js"></script>
     <script>
+        let contentItemsData = [];
+
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
                 const { data: { user } } = await _supabase.auth.getUser();
                 if (!user) { window.location.href = 'login.html'; return; }
 
-                loadWorkflows();
+                await loadUserContentItems();
+                document.getElementById('content-form').addEventListener('submit', async function(e) { e.preventDefault(); await saveContentItem(); });
+                document.getElementById('cancel-content-btn').addEventListener('click', cancelContentEdit);
 
-                document.getElementById('workflow-form').addEventListener('submit', async function(e) { e.preventDefault(); await addWorkflow(); });
                 document.getElementById('logout-btn').addEventListener('click', async function() {
                     const { error } = await _supabase.auth.signOut();
                     if (error) console.error('Error logging out:', error);
@@ -282,65 +293,78 @@
                         navbarCenter.classList.remove('open');
                     }
                 });
-            } catch (error) { showMessage('Error initializing page: ' + error.message, 'error'); }
+            } catch (error) { console.error('Error during initialization:', error); showMessage('Error initializing page: ' + error.message, 'error'); }
         });
 
-        async function loadWorkflows() {
+        async function loadUserContentItems() {
             try {
                 const { data: { user } } = await _supabase.auth.getUser();
                 if (!user) throw new Error('User not authenticated');
-                const { data, error } = await _supabase.from('user_workflows').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-                if (error) throw error;
-                const listElement = document.getElementById('workflows-list');
-                if (data.length === 0) { listElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any workflows yet.</p>'; return; }
+                const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || 'Failed to load content items');
+                const listElement = document.getElementById('content-list');
+                if (!result.content || result.content.length === 0) { listElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t created any content items yet. Create one above to get started.</p>'; return; }
+                contentItemsData = result.content;
                 let html = '';
-                data.forEach(workflow => {
-                    const safeWorkflowId = workflow.workflow_id.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    const safeId = String(workflow.id).replace(/'/g, "\\'");
-                    html += `<div class="workflow-item"><div><strong>${escapeHtml(workflow.name)}</strong><br><small style="color: var(--text-muted); font-family: monospace; font-size: 0.8rem;">ID: ${escapeHtml(workflow.workflow_id)}</small></div><div><button class="btn-trigger" onclick="triggerWorkflowButton('${escapeHtml(workflow.workflow_id)}', event || window.event)">Trigger</button><button class="btn-danger" onclick="deleteWorkflow('${safeId}', this)">Delete</button></div></div>`;
+                result.content.forEach(item => {
+                    html += `<div class="content-item"><div><strong>${escapeHtml(item.title)}</strong><br><small style="color:var(--text-muted);">${escapeHtml(item.description || 'No description')}</small><br><small style="color:var(--text-muted);">Images: ${item.resource_urls ? item.resource_urls.length : 0}</small></div><div><button class="btn-edit" onclick="editContentItem(${item.id})">Edit</button><button class="btn-danger" onclick="deleteContentItem(${item.id})">Delete</button></div></div>`;
                 });
                 listElement.innerHTML = html;
-            } catch (error) { document.getElementById('workflows-list').innerHTML = '<p style="color: var(--text-muted);">Error loading workflows.</p>'; showMessage('Error loading workflows: ' + error.message, 'error'); }
+            } catch (error) { document.getElementById('content-list').innerHTML = '<p style="color:var(--text-muted);">Error loading content items.</p>'; showMessage('Error loading content items: ' + error.message, 'error'); }
         }
 
-        async function addWorkflow() {
+        async function saveContentItem() {
             try {
+                const contentId = document.getElementById('content-id').value;
+                const title = document.getElementById('content-title').value;
+                const description = document.getElementById('content-description').value;
+                const urlsText = document.getElementById('content-urls').value;
+                let resourceUrls = [];
+                if (urlsText.trim()) { resourceUrls = urlsText.split('\n').map(u => u.trim()).filter(u => u); }
+                if (!title) { showMessage('Please enter a title', 'error'); return; }
                 const { data: { user } } = await _supabase.auth.getUser();
                 if (!user) throw new Error('User not authenticated');
-                const name = document.getElementById('workflow-name').value;
-                const workflowId = document.getElementById('workflow-id').value;
-                if (!name || !workflowId) { showMessage('Please fill in all fields', 'error'); return; }
-                const { data, error } = await _supabase.from('user_workflows').insert([{ user_id: user.id, name, workflow_id: workflowId }]).select();
-                if (error) throw error;
-                showMessage('Workflow added successfully!', 'success');
-                document.getElementById('workflow-form').reset();
-                loadWorkflows();
-            } catch (error) { showMessage('Error adding workflow: ' + error.message, 'error'); }
+                const contentData = { title, description, resource_urls: resourceUrls, user_id: user.id };
+                let response;
+                if (contentId) { response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, { method: 'PUT', body: JSON.stringify(contentData) }); }
+                else { response = await apiRequest(`${BACKEND_API_URL}/content`, { method: 'POST', body: JSON.stringify(contentData) }); }
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || 'Failed to save content item');
+                showMessage(contentId ? 'Content item updated!' : 'Content item created!', 'success');
+                document.getElementById('content-form').reset();
+                document.getElementById('content-id').value = '';
+                document.getElementById('cancel-content-btn').style.display = 'none';
+                await loadUserContentItems();
+            } catch (error) { showMessage('Error saving content: ' + error.message, 'error'); }
         }
 
-        async function deleteWorkflow(workflowId, buttonElement) {
-            if (!confirm('Are you sure you want to delete this workflow?')) return;
-            try {
-                const { error } = await _supabase.from('user_workflows').delete().eq('id', workflowId);
-                if (error) throw error;
-                showMessage('Workflow deleted successfully!', 'success');
-                if (buttonElement) buttonElement.closest('.workflow-item').remove(); else loadWorkflows();
-            } catch (error) { showMessage('Error deleting workflow: ' + error.message, 'error'); }
+        function editContentItem(id) {
+            const item = contentItemsData.find(i => String(i.id) === String(id));
+            if (!item) { showMessage('Could not find content item. Try refreshing.', 'error'); return; }
+            document.getElementById('content-id').value = item.id;
+            document.getElementById('content-title').value = item.title;
+            document.getElementById('content-description').value = item.description || '';
+            document.getElementById('content-urls').value = Array.isArray(item.resource_urls) ? item.resource_urls.join('\n') : '';
+            document.getElementById('cancel-content-btn').style.display = 'inline-flex';
+            document.getElementById('content-form').scrollIntoView();
         }
 
-        async function triggerWorkflowButton(workflowId, evt) {
-            const btn = evt ? evt.target : (window.event ? window.event.target : null);
+        function cancelContentEdit() {
+            document.getElementById('content-form').reset();
+            document.getElementById('content-id').value = '';
+            document.getElementById('cancel-content-btn').style.display = 'none';
+        }
+
+        async function deleteContentItem(contentId) {
+            if (!confirm('Are you sure you want to delete this content item?')) return;
             try {
-                if (!workflowId) { showMessage('Error: Workflow ID is missing', 'error'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
-                if (btn) { btn.textContent = 'Triggering...'; btn.disabled = true; }
-                if (typeof window.triggerWorkflow !== 'function') throw new Error('triggerWorkflow function is not available');
-                const result = await window.triggerWorkflow(workflowId);
-                if (result && typeof result.success !== 'undefined') {
-                    if (result.success) { showMessage(result.message, 'success'); }
-                    else { let m = result.message || 'Unknown error'; if (result.errorDetails) m += ' (' + result.errorDetails + ')'; if (result.details) m += ' - ' + result.details; showMessage('Error: ' + m, 'error'); }
-                } else { let m = result && result.message ? result.message : 'Unknown error'; if (result && result.errorDetails) m += ' (' + result.errorDetails + ')'; showMessage('Error: ' + m, 'error'); }
-                if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; }
-            } catch (error) { showMessage('Error: ' + (error.message || 'Unknown error'), 'error'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } }
+                const response = await apiRequest(`${BACKEND_API_URL}/content/${contentId}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || 'Failed to delete');
+                showMessage('Content item deleted!', 'success');
+                await loadUserContentItems();
+            } catch (error) { showMessage('Error deleting: ' + error.message, 'error'); }
         }
 
         function showMessage(text, type) {
