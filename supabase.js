@@ -3,7 +3,7 @@ const SUPABASE_URL = 'https://jvysmxdkiynzqlnzidze.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2eXNteGRraXluenFsbnppZHplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NzE0NTEsImV4cCI6MjA4NzM0NzQ1MX0.HaKg31YZg_lKoVz5NxWkAq-N3T1Gt2DTk3ZYfFW_TqY';
 
 // Backend API URL - Production
-const BACKEND_API_URL = 'https://sma-backend-lujo.onrender.com/api';
+const BACKEND_API_URL = 'https://sma-backend-production-f5c2.up.railway.app/api';
 
 // Initialize Supabase client with error handling
 let _supabase;
