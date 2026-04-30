@@ -346,7 +346,7 @@
         </button>
         <div class="navbar-center" id="navbar-center">
             <a href="dashboard.html" class="nav-link active">Dashboard</a>
-            <a href="workflows.html" class="nav-link">Workflows</a>
+            <a href="workflows.html" class="nav-link">Entities</a>
             <a href="scheduler.html" class="nav-link">Scheduler</a>
             <a href="content.html" class="nav-link">Content</a>
             <a href="logs.html" class="nav-link">Logs</a>
@@ -357,26 +357,26 @@
     <div class="main-content">
         <div class="glass-card">
             <div class="welcome-text">Welcome back, <span id="company-name">Company</span></div>
-            <p class="welcome-sub">Manage your social media automation workflows and schedules.</p>
+            <p class="welcome-sub">Manage your social media automation entities and schedules.</p>
         </div>
 
         <div class="action-grid">
             <div class="action-card" onclick="window.location.href='/products/shareshift/workflows.html'">
-                <h3>Workflow Management</h3>
-                <p>Add, trigger, and manage your n8n workflow integrations.</p>
-                <span class="card-action">Manage Workflows &rarr;</span>
+                <h3>Entity Management</h3>
+                <p>Add, trigger, and manage your entity integrations.</p>
+                <span class="card-action">Manage Entities &rarr;</span>
             </div>
             <div class="action-card" onclick="window.location.href='/products/shareshift/scheduler.html'">
                 <h3>Schedule Automation</h3>
-                <p>Set up recurring and one-time automated workflow triggers.</p>
+                <p>Set up recurring and one-time automated entity triggers.</p>
                 <span class="card-action">Manage Schedules &rarr;</span>
             </div>
         </div>
 
         <div class="glass-card" style="margin-top: 2rem;">
-            <div class="card-title">Your Workflows</div>
+            <div class="card-title">Your Entities</div>
             <div id="user-workflows">
-                <p style="color: var(--text-muted);">Loading your workflows...</p>
+                <p style="color: var(--text-muted);">Loading your entities...</p>
             </div>
         </div>
     </div>
@@ -446,7 +446,7 @@
                 const workflowsElement = document.getElementById('user-workflows');
 
                 if (data.length === 0) {
-                    workflowsElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any workflows yet. <a href="workflows.html" style="color: var(--blue-mid);">Add your first workflow</a>.</p>';
+                    workflowsElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any entities yet. <a href="workflows.html" style="color: var(--blue-mid);">Add your first entity</a>.</p>';
                     return;
                 }
 
@@ -463,14 +463,14 @@
                 workflowsElement.innerHTML = html;
             } catch (error) {
                 console.error('Error loading workflows:', error);
-                document.getElementById('user-workflows').innerHTML = '<p style="color: var(--text-muted);">Error loading workflows.</p>';
+                document.getElementById('user-workflows').innerHTML = '<p style="color: var(--text-muted);">Error loading entities.</p>';
             }
         }
 
         async function triggerWorkflowButton(workflowId, event) {
             const btn = event ? event.target : (window.event ? window.event.target : null);
             try {
-                if (!workflowId) { alert('Error: Workflow ID is missing'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
+                if (!workflowId) { alert('Error: Entity ID is missing'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
                 if (btn) { btn.textContent = 'Triggering...'; btn.disabled = true; }
                 if (typeof window.triggerWorkflow !== 'function') throw new Error('triggerWorkflow function is not available');
                 const result = await window.triggerWorkflow(workflowId);
@@ -480,7 +480,7 @@
                 } else { let m = result && result.message ? result.message : 'Unknown error'; if (result && result.errorDetails) m += ' (' + result.errorDetails + ')'; alert('Error: ' + m); }
                 if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; }
             } catch (error) {
-                console.error('Error triggering workflow:', error);
+                console.error('Error triggering entity:', error);
                 alert('Error: ' + (error.message || 'Unknown error'));
                 if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; }
             }

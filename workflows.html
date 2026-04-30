@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflows — ShareShift</title>
+    <title>Entities — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -215,7 +215,7 @@
         </button>
         <div class="navbar-center" id="navbar-center">
             <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="workflows.html" class="nav-link active">Workflows</a>
+            <a href="workflows.html" class="nav-link active">Entities</a>
             <a href="scheduler.html" class="nav-link">Scheduler</a>
             <a href="content.html" class="nav-link">Content</a>
             <a href="logs.html" class="nav-link">Logs</a>
@@ -225,25 +225,25 @@
 
     <div class="container">
         <div class="glass-card">
-            <div class="card-title">Add Workflow</div>
+            <div class="card-title">Add Entity</div>
             <div id="message"></div>
             <form id="workflow-form">
                 <div class="form-group">
-                    <label for="workflow-name">Workflow Name</label>
+                    <label for="workflow-name">Entity Name</label>
                     <input type="text" id="workflow-name" class="frost-input" placeholder="e.g., Daily Post Scheduler" required>
                 </div>
                 <div class="form-group">
-                    <label for="workflow-id">Workflow ID</label>
-                    <input type="text" id="workflow-id" class="frost-input" placeholder="Enter n8n workflow ID" required>
+                    <label for="workflow-id">Entity ID</label>
+                    <input type="text" id="workflow-id" class="frost-input" placeholder="Enter entity ID" required>
                 </div>
-                <button type="submit" class="btn-primary">Add Workflow</button>
+                <button type="submit" class="btn-primary">Add Entity</button>
             </form>
         </div>
 
         <div class="glass-card">
-            <div class="card-title">Your Saved Workflows</div>
+            <div class="card-title">Your Saved Entities</div>
             <div id="workflows-list">
-                <p style="color: var(--text-muted);">Loading workflows...</p>
+                <p style="color: var(--text-muted);">Loading entities...</p>
             </div>
         </div>
     </div>
@@ -293,7 +293,7 @@
                 const { data, error } = await _supabase.from('user_workflows').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
                 if (error) throw error;
                 const listElement = document.getElementById('workflows-list');
-                if (data.length === 0) { listElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any workflows yet.</p>'; return; }
+                if (data.length === 0) { listElement.innerHTML = '<p style="color: var(--text-muted);">You haven\'t saved any entities yet.</p>'; return; }
                 let html = '';
                 data.forEach(workflow => {
                     const safeWorkflowId = workflow.workflow_id.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -301,7 +301,7 @@
                     html += `<div class="workflow-item"><div><strong>${escapeHtml(workflow.name)}</strong><br><small style="color: var(--text-muted); font-family: monospace; font-size: 0.8rem;">ID: ${escapeHtml(workflow.workflow_id)}</small></div><div><button class="btn-trigger" onclick="triggerWorkflowButton('${escapeHtml(workflow.workflow_id)}', event || window.event)">Trigger</button><button class="btn-danger" onclick="deleteWorkflow('${safeId}', this)">Delete</button></div></div>`;
                 });
                 listElement.innerHTML = html;
-            } catch (error) { document.getElementById('workflows-list').innerHTML = '<p style="color: var(--text-muted);">Error loading workflows.</p>'; showMessage('Error loading workflows: ' + error.message, 'error'); }
+            } catch (error) { document.getElementById('workflows-list').innerHTML = '<p style="color: var(--text-muted);">Error loading entities.</p>'; showMessage('Error loading entities: ' + error.message, 'error'); }
         }
 
         async function addWorkflow() {
@@ -313,26 +313,26 @@
                 if (!name || !workflowId) { showMessage('Please fill in all fields', 'error'); return; }
                 const { data, error } = await _supabase.from('user_workflows').insert([{ user_id: user.id, name, workflow_id: workflowId }]).select();
                 if (error) throw error;
-                showMessage('Workflow added successfully!', 'success');
+                showMessage('Entity added successfully!', 'success');
                 document.getElementById('workflow-form').reset();
                 loadWorkflows();
-            } catch (error) { showMessage('Error adding workflow: ' + error.message, 'error'); }
+            } catch (error) { showMessage('Error adding entity: ' + error.message, 'error'); }
         }
 
         async function deleteWorkflow(workflowId, buttonElement) {
-            if (!confirm('Are you sure you want to delete this workflow?')) return;
+            if (!confirm('Are you sure you want to delete this entity?')) return;
             try {
                 const { error } = await _supabase.from('user_workflows').delete().eq('id', workflowId);
                 if (error) throw error;
-                showMessage('Workflow deleted successfully!', 'success');
+                showMessage('Entity deleted successfully!', 'success');
                 if (buttonElement) buttonElement.closest('.workflow-item').remove(); else loadWorkflows();
-            } catch (error) { showMessage('Error deleting workflow: ' + error.message, 'error'); }
+            } catch (error) { showMessage('Error deleting entity: ' + error.message, 'error'); }
         }
 
         async function triggerWorkflowButton(workflowId, evt) {
             const btn = evt ? evt.target : (window.event ? window.event.target : null);
             try {
-                if (!workflowId) { showMessage('Error: Workflow ID is missing', 'error'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
+                if (!workflowId) { showMessage('Error: Entity ID is missing', 'error'); if (btn) { btn.textContent = 'Trigger'; btn.disabled = false; } return; }
                 if (btn) { btn.textContent = 'Triggering...'; btn.disabled = true; }
                 if (typeof window.triggerWorkflow !== 'function') throw new Error('triggerWorkflow function is not available');
                 const result = await window.triggerWorkflow(workflowId);

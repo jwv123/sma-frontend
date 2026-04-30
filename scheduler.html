@@ -240,7 +240,7 @@
         </button>
         <div class="navbar-center" id="navbar-center">
             <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="workflows.html" class="nav-link">Workflows</a>
+            <a href="workflows.html" class="nav-link">Entities</a>
             <a href="scheduler.html" class="nav-link active">Scheduler</a>
             <a href="content.html" class="nav-link">Content</a>
             <a href="logs.html" class="nav-link">Logs</a>
@@ -255,9 +255,9 @@
             <form id="schedule-form">
                 <input type="hidden" id="schedule-id">
                 <div class="form-group">
-                    <label for="workflow-selector">Select Workflow</label>
+                    <label for="workflow-selector">Select Entity</label>
                     <select id="workflow-selector" class="frost-input" required>
-                        <option value="">Loading workflows...</option>
+                        <option value="">Loading entities...</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -402,9 +402,9 @@
                 if (workflowError) throw workflowError;
                 const workflowSelector = document.getElementById('workflow-selector');
                 workflowSelector.innerHTML = '';
-                if (workflowData.length === 0) { workflowSelector.innerHTML = '<option value="">No workflows found</option>'; }
+                if (workflowData.length === 0) { workflowSelector.innerHTML = '<option value="">No entities found</option>'; }
                 else { workflowData.forEach(w => { const o = document.createElement('option'); o.value = w.workflow_id; o.textContent = `${w.name} (${w.workflow_id})`; workflowSelector.appendChild(o); }); }
-            } catch (error) { document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading workflows</option>'; }
+            } catch (error) { document.getElementById('workflow-selector').innerHTML = '<option value="">Error loading entities</option>'; }
             try {
                 const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
@@ -426,7 +426,7 @@
                 schedulesData = result.schedules;
                 let html = '';
                 result.schedules.forEach(schedule => {
-                    let scheduleDescription = `Workflow: ${escapeHtml(schedule.workflow_id)}`;
+                    let scheduleDescription = `Entity: ${escapeHtml(schedule.workflow_id)}`;
                     try {
                         const cronParts = schedule.cron_expression.split(' ');
                         if (cronParts.length >= 5) {
@@ -491,7 +491,7 @@
                         break;
                     default: showMessage('Please select a schedule type', 'error'); return;
                 }
-                if (!workflowId) { showMessage('Please select a workflow', 'error'); return; }
+                if (!workflowId) { showMessage('Please select an entity', 'error'); return; }
                 const { data: { user } } = await _supabase.auth.getUser();
                 if (!user) throw new Error('User not authenticated');
                 const contentItemId = document.getElementById('content-selector').value;

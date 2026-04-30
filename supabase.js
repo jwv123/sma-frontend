@@ -127,14 +127,14 @@ async function triggerWorkflow(workflowId) {
         // Validate input
         if (!workflowId) {
             console.error('Workflow ID is required');
-            return { success: false, message: 'Workflow ID is required' };
+            return { success: false, message: 'Entity ID is required' };
         }
 
         // Sanitize workflow ID - remove any whitespace or special characters that might cause issues
         const sanitizedWorkflowId = workflowId.trim();
         if (!sanitizedWorkflowId) {
             console.error('Workflow ID is required (after sanitization)');
-            return { success: false, message: 'Workflow ID is required (after sanitization)' };
+            return { success: false, message: 'Entity ID is required (after sanitization)' };
         }
 
         // Construct the n8n webhook URL (production)
@@ -180,15 +180,15 @@ async function triggerWorkflow(workflowId) {
             try {
                 result = JSON.parse(responseText);
             } catch (parseError) {
-                result = { message: 'Workflow triggered successfully', rawResponse: responseText };
+                result = { message: 'Entity triggered successfully', rawResponse: responseText };
             }
         } else {
-            result = { message: 'Workflow triggered successfully (empty response)' };
+            result = { message: 'Entity triggered successfully (empty response)' };
         }
 
         return {
             success: true,
-            message: `Workflow ${sanitizedWorkflowId} triggered successfully!`,
+            message: `Entity ${sanitizedWorkflowId} triggered successfully!`,
             data: result
         };
     } catch (error) {
@@ -196,9 +196,9 @@ async function triggerWorkflow(workflowId) {
 
         // Handle different types of errors with more specificity
         if (error.name === 'AbortError') {
-            return { success: false, message: 'Request timed out. Please check your internet connection or n8n server.' };
+            return { success: false, message: 'Request timed out. Please check your internet connection.' };
         } else if (error.message.includes('Failed to fetch')) {
-            return { success: false, message: 'Network error. Please check your internet connection and ensure the n8n server is accessible.', errorDetails: error.toString() };
+            return { success: false, message: 'Network error. Please check your internet connection.', errorDetails: error.toString() };
         } else if (error.message.includes('CORS')) {
             return { success: false, message: 'CORS error. The server is not allowing requests from this domain.', errorDetails: error.toString() };
         } else {
