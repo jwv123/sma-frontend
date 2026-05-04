@@ -229,6 +229,25 @@
 
         #dashboard-link { display: none; }
 
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .site-footer a {
+            color: var(--blue-mid);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 640px) {
             .hero-title { font-size: 2rem; }
             .hero-sub { font-size: 1rem; }
@@ -325,6 +344,10 @@
             </div>
         </div>
     </section>
+
+    <footer class="site-footer">
+        <a href="privacy.html">Privacy Policy</a> &middot; &copy; 2026 ShareShift
+    </footer>
 
     <script src="supabase.js"></script>
     <script>

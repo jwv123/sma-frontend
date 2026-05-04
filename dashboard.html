@@ -293,6 +293,23 @@
 
         .btn-trigger:disabled { opacity: 0.6; cursor: not-allowed; }
 
+        .site-footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .site-footer a {
+            color: var(--blue-mid);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .navbar { padding: 0.75rem 1rem; }
             .nav-toggle { display: flex; }
@@ -380,6 +397,10 @@
             </div>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <a href="privacy.html">Privacy Policy</a> &middot; &copy; 2026 ShareShift
+    </footer>
 
     <script src="supabase.js"></script>
     <script>

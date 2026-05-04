@@ -181,6 +181,23 @@
 
         .links a:hover { color: var(--blue-bright); }
 
+        .site-footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .site-footer a {
+            color: var(--blue-mid);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 480px) {
             .glass-card { padding: 1.75rem 1.25rem; margin: 1rem; }
         }
@@ -222,6 +239,10 @@
             <p style="margin-top: 0.5rem;"><a href="index.html">Back to Home</a></p>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <a href="privacy.html">Privacy Policy</a> &middot; &copy; 2026 ShareShift
+    </footer>
 
     <script src="supabase.js"></script>
     <script>

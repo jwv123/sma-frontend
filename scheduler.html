@@ -199,6 +199,23 @@
         .success { background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.2); color: #1A7A30; }
         .error { background: rgba(220, 53, 69, 0.08); border: 1px solid rgba(220, 53, 69, 0.2); color: #A82030; }
 
+        .site-footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .site-footer a {
+            color: var(--blue-mid);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .site-footer a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .navbar { padding: 0.75rem 1rem; }
             .nav-toggle { display: flex; }
@@ -329,6 +346,10 @@
             <div id="schedules-list"><p style="color: var(--text-muted);">Loading schedules...</p></div>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <a href="privacy.html">Privacy Policy</a> &middot; &copy; 2026 ShareShift
+    </footer>
 
     <script src="supabase.js"></script>
     <script>
