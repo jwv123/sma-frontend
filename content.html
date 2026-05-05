@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Content — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -284,8 +283,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) { window.location.href = '/products/shareshift/login.html'; return; }
+                const user = await getCurrentUser();
+                if (!user) { window.location.href = 'login.html'; return; }
 
                 await loadUserContentItems();
                 document.getElementById('content-form').addEventListener('submit', async function(e) { e.preventDefault(); await saveContentItem(); });
@@ -294,7 +293,8 @@
                 document.getElementById('logout-btn').addEventListener('click', async function() {
                     const { error } = await _supabase.auth.signOut();
                     if (error) console.error('Error logging out:', error);
-                    window.location.href = '/products/shareshift/index.html';
+                    clearSupabaseSession();
+                    window.location.href = 'index.html';
                 });
 
                 const navToggle = document.getElementById('nav-toggle');
@@ -320,7 +320,7 @@
 
         async function loadUserContentItems() {
             try {
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 if (!user) throw new Error('User not authenticated');
                 const response = await apiRequest(`${BACKEND_API_URL}/content/${user.id}`);
                 const result = await response.json();
@@ -345,7 +345,7 @@
                 let resourceUrls = [];
                 if (urlsText.trim()) { resourceUrls = urlsText.split('\n').map(u => u.trim()).filter(u => u); }
                 if (!title) { showMessage('Please enter a title', 'error'); return; }
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 if (!user) throw new Error('User not authenticated');
                 const contentData = { title, description, resource_urls: resourceUrls, user_id: user.id };
                 let response;

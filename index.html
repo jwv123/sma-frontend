@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -352,7 +351,7 @@
     <script src="supabase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
-            const { data: { user } } = await _supabase.auth.getUser();
+            const user = await getCurrentUser();
             if (user) {
                 document.getElementById('dashboard-link').style.display = 'inline-flex';
             }

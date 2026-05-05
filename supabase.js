@@ -84,9 +84,27 @@ async function registerUser(username, email, password, company) {
     }
 }
 
+// Helper: forcefully clear any stale Supabase session from localStorage
+// Prevents cross-account data leakage from stale sessions
+function clearSupabaseSession() {
+    try {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                localStorage.removeItem(key);
+            }
+        });
+    } catch (e) {
+        console.warn('Error clearing Supabase session from localStorage:', e);
+    }
+}
+
 // Function to log in a user
 async function loginUser(email, password) {
     try {
+        // Clear any stale session before signing in to prevent cross-account leakage
+        clearSupabaseSession();
+
         const { data, error } = await _supabase.auth.signInWithPassword({
             email: email,
             password: password,
@@ -133,10 +151,14 @@ async function triggerWorkflow(workflowId) {
         const n8nWebhookUrl = `https://ef0ps4gk.rcsrv.net/webhook/${encodeURIComponent(sanitizedWorkflowId)}`;
 
         console.log(`Triggering workflow with ID: ${sanitizedWorkflowId}`);
+        console.log('Attempting to trigger workflow...');
 
         // Make the actual API call to trigger the workflow with timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+        // Add more detailed logging
+        console.log('About to make fetch request...');
 
         const response = await fetch(n8nWebhookUrl, {
             method: 'POST',
@@ -154,11 +176,18 @@ async function triggerWorkflow(workflowId) {
 
         clearTimeout(timeoutId);
 
+        console.log('Fetch request completed');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
         // Try to get response text regardless of status
         const responseText = await response.text();
+        console.log('Response text:', responseText);
 
         // Check if the request was successful
         if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+            console.error('Response text:', responseText);
             return {
                 success: false,
                 message: `Server error: ${response.status} - ${response.statusText}`,
@@ -171,13 +200,16 @@ async function triggerWorkflow(workflowId) {
         if (responseText) {
             try {
                 result = JSON.parse(responseText);
+                console.log('Parsed JSON response:', result);
             } catch (parseError) {
+                console.warn('Could not parse response as JSON, using raw text');
                 result = { message: 'Entity triggered successfully', rawResponse: responseText };
             }
         } else {
             result = { message: 'Entity triggered successfully (empty response)' };
         }
 
+        console.log('Returning success result');
         return {
             success: true,
             message: `Entity ${sanitizedWorkflowId} triggered successfully!`,
@@ -185,6 +217,7 @@ async function triggerWorkflow(workflowId) {
         };
     } catch (error) {
         console.error('Error triggering workflow:', error);
+        console.error('Error stack:', error.stack);
 
         // Handle different types of errors with more specificity
         if (error.name === 'AbortError') {
@@ -194,6 +227,7 @@ async function triggerWorkflow(workflowId) {
         } else if (error.message.includes('CORS')) {
             return { success: false, message: 'CORS error. The server is not allowing requests from this domain.', errorDetails: error.toString() };
         } else {
+            // Provide more detailed error information
             const errorMessage = error.message || 'Unknown error occurred';
             return { success: false, message: `Error: ${errorMessage}`, errorDetails: error.toString() };
         }
@@ -205,7 +239,7 @@ async function triggerWorkflow(workflowId) {
 async function ensureProfile(user) {
     const { data: profile, error } = await _supabase
         .from('profiles')
-        .select('id')
+        .select('id, username, company')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -235,6 +269,23 @@ async function ensureProfile(user) {
     }
 
     return profile;
+}
+
+// Helper: get the current authenticated user from the session
+// Verifies the access token with the Supabase Auth server to detect stale sessions
+async function getCurrentUser() {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session || !session.user) return null;
+
+    // Verify the access token is still valid for this user
+    const { data: { user }, error } = await _supabase.auth.getUser(session.access_token);
+    if (error || !user || user.id !== session.user.id) {
+        // Session is stale or invalid — clear it
+        clearSupabaseSession();
+        return null;
+    }
+
+    return user;
 }
 
 // Helper: make authenticated API requests to the backend
@@ -285,6 +336,8 @@ if (typeof window.triggerWorkflow !== 'function') {
     console.log('triggerWorkflow function exposed globally with recursion protection');
 } else {
     console.warn('triggerWorkflow function already exists, not overwriting');
+    // Log the existing function for debugging
+    console.log('Existing triggerWorkflow function:', window.triggerWorkflow);
 }
 
 // Test function to check if everything is working
@@ -370,6 +423,7 @@ window.testWorkflowUrl = async function testWorkflowUrl(workflowId = 'test') {
 
         console.log('Workflow URL test response:', response.status, response.statusText);
         const text = await response.text();
+        console.log('Response text:', text);
 
         return {
             success: response.ok,

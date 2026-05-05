@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Execution Logs — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -336,8 +335,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) { window.location.href = '/products/shareshift/login.html'; return; }
+                const user = await getCurrentUser();
+                if (!user) { window.location.href = 'login.html'; return; }
 
                 loadLogs();
 
@@ -348,7 +347,8 @@
                 document.getElementById('logout-btn').addEventListener('click', async function() {
                     const { error } = await _supabase.auth.signOut();
                     if (error) console.error('Error logging out:', error);
-                    window.location.href = '/products/shareshift/index.html';
+                    clearSupabaseSession();
+                    window.location.href = 'index.html';
                 });
 
                 const navToggle = document.getElementById('nav-toggle');
@@ -379,11 +379,20 @@
             const logsList = document.getElementById('logs-list');
             logsList.innerHTML = '<div class="loading">Loading logs...</div>';
             try {
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 if (!user) throw new Error('User not authenticated');
                 const from = (currentPage - 1) * logsPerPage;
                 const to = from + logsPerPage;
-                let query = _supabase.from('schedule_executions').select(`id,schedule_id,executed_at,success,response,workflow_schedules(id,workflow_id,name,description,active)`).order('executed_at', { ascending: false }).range(from, to);
+                // First get user's schedule IDs to scope the logs query
+                const { data: userSchedules } = await _supabase.from('workflow_schedules').select('id').eq('user_id', user.id);
+                const scheduleIds = userSchedules ? userSchedules.map(s => s.id) : [];
+                if (scheduleIds.length === 0) {
+                    document.getElementById('logs-list').innerHTML = '<p style="color:var(--text-muted);">No execution logs found.</p>';
+                    document.getElementById('log-count').textContent = '0 log(s) found';
+                    updatePagination(false, false);
+                    return;
+                }
+                let query = _supabase.from('schedule_executions').select(`id,schedule_id,executed_at,success,response,workflow_schedules(id,workflow_id,name,description,active)`).in('schedule_id', scheduleIds).order('executed_at', { ascending: false }).range(from, to);
                 if (statusFilter === 'success') query = query.eq('success', true);
                 else if (statusFilter === 'error') query = query.eq('success', false);
                 if (fromDate) query = query.gte('executed_at', fromDate + 'T00:00:00');

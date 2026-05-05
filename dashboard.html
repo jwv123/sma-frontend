@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -378,12 +377,12 @@
         </div>
 
         <div class="action-grid">
-            <div class="action-card" onclick="window.location.href='/products/shareshift/workflows.html'">
+            <div class="action-card" onclick="window.location.href='workflows.html'">
                 <h3>Entity Management</h3>
                 <p>Add, trigger, and manage your entity integrations.</p>
                 <span class="card-action">Manage Entities &rarr;</span>
             </div>
-            <div class="action-card" onclick="window.location.href='/products/shareshift/scheduler.html'">
+            <div class="action-card" onclick="window.location.href='scheduler.html'">
                 <h3>Schedule Automation</h3>
                 <p>Set up recurring and one-time automated entity triggers.</p>
                 <span class="card-action">Manage Schedules &rarr;</span>
@@ -405,9 +404,9 @@
     <script src="supabase.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
-            const { data: { user } } = await _supabase.auth.getUser();
+            const user = await getCurrentUser();
             if (!user) {
-                window.location.href = '/products/shareshift/login.html';
+                window.location.href = 'login.html';
                 return;
             }
 
@@ -424,7 +423,8 @@
             document.getElementById('logout-btn').addEventListener('click', async function() {
                 const { error } = await _supabase.auth.signOut();
                 if (error) console.error('Error logging out:', error);
-                window.location.href = '/products/shareshift/index.html';
+                clearSupabaseSession();
+                window.location.href = 'index.html';
             });
 
             const navToggle = document.getElementById('nav-toggle');
@@ -449,7 +449,7 @@
 
         async function loadUserWorkflows() {
             try {
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 const { data, error } = await _supabase
                     .from('user_workflows')
                     .select('*')

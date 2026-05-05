@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entities — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -274,8 +273,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
-                const { data: { user } } = await _supabase.auth.getUser();
-                if (!user) { window.location.href = '/products/shareshift/login.html'; return; }
+                const user = await getCurrentUser();
+                if (!user) { window.location.href = 'login.html'; return; }
 
                 loadWorkflows();
 
@@ -283,7 +282,8 @@
                 document.getElementById('logout-btn').addEventListener('click', async function() {
                     const { error } = await _supabase.auth.signOut();
                     if (error) console.error('Error logging out:', error);
-                    window.location.href = '/products/shareshift/index.html';
+                    clearSupabaseSession();
+                    window.location.href = 'index.html';
                 });
 
                 const navToggle = document.getElementById('nav-toggle');
@@ -309,7 +309,7 @@
 
         async function loadWorkflows() {
             try {
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 if (!user) throw new Error('User not authenticated');
                 const { data, error } = await _supabase.from('user_workflows').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
                 if (error) throw error;
@@ -327,7 +327,7 @@
 
         async function addWorkflow() {
             try {
-                const { data: { user } } = await _supabase.auth.getUser();
+                const user = await getCurrentUser();
                 if (!user) throw new Error('User not authenticated');
                 const name = document.getElementById('workflow-name').value;
                 const workflowId = document.getElementById('workflow-id').value;
@@ -343,7 +343,9 @@
         async function deleteWorkflow(workflowId, buttonElement) {
             if (!confirm('Are you sure you want to delete this entity?')) return;
             try {
-                const { error } = await _supabase.from('user_workflows').delete().eq('id', workflowId);
+                const user = await getCurrentUser();
+                if (!user) throw new Error('User not authenticated');
+                const { error } = await _supabase.from('user_workflows').delete().eq('id', workflowId).eq('user_id', user.id);
                 if (error) throw error;
                 showMessage('Entity deleted successfully!', 'success');
                 if (buttonElement) buttonElement.closest('.workflow-item').remove(); else loadWorkflows();
