@@ -411,17 +411,12 @@
                 return;
             }
 
-            const { data: profile, error } = await _supabase
-                .from('profiles')
-                .select('company')
-                .eq('id', user.id)
-                .single();
+            const profile = await ensureProfile(user);
 
-            if (error) {
-                console.error('Error fetching profile:', error);
-                document.getElementById('company-name').textContent = user.email;
-            } else {
+            if (profile && profile.company) {
                 document.getElementById('company-name').textContent = profile.company;
+            } else {
+                document.getElementById('company-name').textContent = user.email;
             }
 
             loadUserWorkflows();

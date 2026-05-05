@@ -43,29 +43,29 @@ try {
 // Function to register a new user
 async function registerUser(username, email, password, company) {
     try {
-        // Sign up the user
+        // Sign up the user with metadata so profile can be created after confirmation
         const { data, error } = await _supabase.auth.signUp({
             email: email,
             password: password,
+            options: {
+                data: {
+                    username: username,
+                    company: company,
+                }
+            }
         });
 
         if (error) {
             throw error;
         }
 
-        // Wait a moment for auth to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Get the current user
-        const { data: { user } } = await _supabase.auth.getUser();
-
-        if (user) {
-            // Store additional user info in the database
-            const { data: profileData, error: profileError } = await _supabase
+        // If user is immediately authenticated (email confirm disabled), create profile now
+        if (data.user && !data.session?.pending_confirmation) {
+            const { error: profileError } = await _supabase
                 .from('profiles')
                 .upsert([
                     {
-                        id: user.id,
+                        id: data.user.id,
                         username: username,
                         company: company,
                     },
@@ -76,9 +76,9 @@ async function registerUser(username, email, password, company) {
             if (profileError) {
                 throw profileError;
             }
-
-            return { success: true, message: 'Registration successful!' };
         }
+
+        return { success: true, message: 'Registration successful! Please check your email to confirm your account.' };
     } catch (error) {
         return { success: false, message: error.message };
     }
@@ -96,22 +96,14 @@ async function loginUser(email, password) {
             throw error;
         }
 
-        // Get user profile information
-        const { data: profile, error: profileError } = await _supabase
-            .from('profiles')
-            .select('company')
-            .eq('id', data.user.id)
-            .single();
-
-        if (profileError) {
-            throw profileError;
-        }
+        // Get or create user profile
+        const profile = await ensureProfile(data.user);
 
         return {
             success: true,
             user: {
                 ...data.user,
-                company: profile.company,
+                company: profile ? profile.company : '',
             },
         };
     } catch (error) {
@@ -206,6 +198,43 @@ async function triggerWorkflow(workflowId) {
             return { success: false, message: `Error: ${errorMessage}`, errorDetails: error.toString() };
         }
     }
+}
+
+// Helper: ensure a profile row exists for the current user
+// If missing (e.g. after email confirmation), creates one from user metadata
+async function ensureProfile(user) {
+    const { data: profile, error } = await _supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error checking profile:', error);
+        return null;
+    }
+
+    if (!profile) {
+        // No profile row — create one from user metadata
+        const meta = user.user_metadata || {};
+        const { data: newProfile, error: insertError } = await _supabase
+            .from('profiles')
+            .insert([{
+                id: user.id,
+                username: meta.username || user.email,
+                company: meta.company || '',
+            }])
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error('Error creating profile:', insertError);
+            return null;
+        }
+        return newProfile;
+    }
+
+    return profile;
 }
 
 // Helper: make authenticated API requests to the backend
