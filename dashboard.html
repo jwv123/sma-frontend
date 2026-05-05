@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -377,12 +378,12 @@
         </div>
 
         <div class="action-grid">
-            <div class="action-card" onclick="window.location.href='workflows.html'">
+            <div class="action-card" onclick="window.location.href='/products/shareshift/workflows.html'">
                 <h3>Entity Management</h3>
                 <p>Add, trigger, and manage your entity integrations.</p>
                 <span class="card-action">Manage Entities &rarr;</span>
             </div>
-            <div class="action-card" onclick="window.location.href='scheduler.html'">
+            <div class="action-card" onclick="window.location.href='/products/shareshift/scheduler.html'">
                 <h3>Schedule Automation</h3>
                 <p>Set up recurring and one-time automated entity triggers.</p>
                 <span class="card-action">Manage Schedules &rarr;</span>
@@ -406,7 +407,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             const user = await getCurrentUser();
             if (!user) {
-                window.location.href = 'login.html';
+                window.location.href = '/products/shareshift/login.html';
                 return;
             }
 
@@ -424,7 +425,7 @@
                 const { error } = await _supabase.auth.signOut();
                 if (error) console.error('Error logging out:', error);
                 clearSupabaseSession();
-                window.location.href = 'index.html';
+                window.location.href = '/products/shareshift/index.html';
             });
 
             const navToggle = document.getElementById('nav-toggle');

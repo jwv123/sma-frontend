@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entities — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -274,7 +275,7 @@
             try {
                 if (typeof _supabase === 'undefined') { showMessage('Error: Could not connect to the database.', 'error'); return; }
                 const user = await getCurrentUser();
-                if (!user) { window.location.href = 'login.html'; return; }
+                if (!user) { window.location.href = '/products/shareshift/login.html'; return; }
 
                 loadWorkflows();
 
@@ -283,7 +284,7 @@
                     const { error } = await _supabase.auth.signOut();
                     if (error) console.error('Error logging out:', error);
                     clearSupabaseSession();
-                    window.location.href = 'index.html';
+                    window.location.href = '/products/shareshift/index.html';
                 });
 
                 const navToggle = document.getElementById('nav-toggle');

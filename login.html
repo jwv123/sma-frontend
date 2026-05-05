@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <base href="/products/shareshift/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — ShareShift</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -251,7 +252,7 @@
             const result = await loginUser(email, password);
             if (result.success) {
                 document.getElementById('message').innerHTML = '<div class="message success">Welcome back to ' + escapeHtml(result.user.company) + '!</div>';
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+                setTimeout(() => { window.location.href = '/products/shareshift/dashboard.html'; }, 2000);
             } else {
                 document.getElementById('message').innerHTML = '<div class="message error">' + escapeHtml(result.message) + '</div>';
             }
